@@ -1019,9 +1019,12 @@ extension Phase4GoogleSheetsService on GoogleSheetsService {
     );
   }
 
-  Future<void> reconnect() async {
-    /* next operation requests a fresh authorized client */
-  }
+  /// Revalidates access with the fresh authorized client supplied by the
+  /// repository, then confirms the workbook remains readable and editable.
+  Future<ValidationResult> reconnect(
+    String spreadsheetId, {
+    required google_auth.AuthClient client,
+  }) => validateSpreadsheetV4(spreadsheetId, client: client);
 }
 
 class ParsedTransactions {

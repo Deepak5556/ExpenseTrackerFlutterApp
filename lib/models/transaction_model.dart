@@ -65,7 +65,7 @@ class TransactionModel {
     amountMinor,
     _safe(categoryId),
     _safe(categoryName),
-    _safe('$date|$time'),
+    _safe('${date}T$time:00'),
     _safe(paymentMethod),
     _safe(notes),
     '',
@@ -82,7 +82,11 @@ class TransactionModel {
       throw FormatException('Invalid transaction row');
     }
     final dateTime = _unescape(cell(6));
-    final split = dateTime.split('|');
+    final split = dateTime.contains('|')
+        ? dateTime.split('|')
+        : dateTime.contains('T')
+        ? <String>[dateTime.substring(0, 10), dateTime.substring(11, 16)]
+        : <String>[dateTime, ''];
     return TransactionModel(
       transactionId: cell(0),
       type: TransactionType.values.byName(cell(1)),
