@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
@@ -11,8 +12,7 @@ class PrivacyScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.pageBackground,
     appBar: AppBar(title: const Text('Privacy and data')),
-    body: ListView(
-      padding: const EdgeInsets.all(AppSpacing.pageCompact),
+    body: ResponsiveListView(
       children: <Widget>[
         SurfaceCard(
           child: Column(

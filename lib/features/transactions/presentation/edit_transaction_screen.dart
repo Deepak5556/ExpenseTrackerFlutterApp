@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -102,8 +103,7 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
       appBar: AppBar(title: const Text('Edit transaction')),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.pageCompact),
+        child: ResponsiveListView(
           children: <Widget>[
             SurfaceCard(
               child: Column(

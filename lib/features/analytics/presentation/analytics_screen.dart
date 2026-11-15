@@ -8,7 +8,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/utils/window_size_class.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -92,8 +94,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.pageCompact),
+      body: ResponsiveListView(
         children: <Widget>[
           if (!data.isConnected)
             SurfaceCard(
@@ -132,55 +133,35 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.x3),
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final double gap = AppSpacing.x2;
-                final double cardWidth = (constraints.maxWidth - gap) / 2;
-                return Wrap(
-                  spacing: gap,
-                  runSpacing: gap,
-                  children: <Widget>[
-                    SizedBox(
-                      width: cardWidth,
-                      child: KpiCard(
-                        label: 'Total expenses',
-                        value: formatMoney(expenses),
-                        detail: '$_months month period',
-                        icon: Icons.trending_down_rounded,
-                        valueColor: AppColors.brandStart,
-                      ),
-                    ),
-                    SizedBox(
-                      width: cardWidth,
-                      child: KpiCard(
-                        label: 'Total income',
-                        value: formatMoney(income),
-                        detail: '$_months month period',
-                        icon: Icons.trending_up_rounded,
-                        valueColor: AppColors.income,
-                      ),
-                    ),
-                    SizedBox(
-                      width: cardWidth,
-                      child: KpiCard(
-                        label: 'Savings',
-                        value: formatMoney(income - expenses),
-                        detail: 'Income minus recorded expenses',
-                        icon: Icons.savings_outlined,
-                      ),
-                    ),
-                    SizedBox(
-                      width: cardWidth,
-                      child: KpiCard(
-                        label: 'Average expense',
-                        value: formatMoney(count == 0 ? 0 : expenses ~/ count),
-                        detail: '$count expense entries',
-                        icon: Icons.calculate_outlined,
-                      ),
-                    ),
-                  ],
-                );
-              },
+            ResponsiveGrid(
+              children: <Widget>[
+                KpiCard(
+                  label: 'Total expenses',
+                  value: formatMoney(expenses),
+                  detail: '$_months month period',
+                  icon: Icons.trending_down_rounded,
+                  valueColor: AppColors.brandStart,
+                ),
+                KpiCard(
+                  label: 'Total income',
+                  value: formatMoney(income),
+                  detail: '$_months month period',
+                  icon: Icons.trending_up_rounded,
+                  valueColor: AppColors.income,
+                ),
+                KpiCard(
+                  label: 'Savings',
+                  value: formatMoney(income - expenses),
+                  detail: 'Income minus recorded expenses',
+                  icon: Icons.savings_outlined,
+                ),
+                KpiCard(
+                  label: 'Average expense',
+                  value: formatMoney(count == 0 ? 0 : expenses ~/ count),
+                  detail: '$count expense entries',
+                  icon: Icons.calculate_outlined,
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.x3),
             SurfaceCard(
@@ -197,7 +178,11 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.x3),
                   SizedBox(
-                    height: 230,
+                    height: context.responsiveValue(
+                      compact: 205,
+                      medium: 230,
+                      expanded: 260,
+                    ),
                     child: _IncomeExpenseChart(
                       items: data.transactions,
                       months: _months,
@@ -242,7 +227,11 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                     )
                   else ...<Widget>[
                     SizedBox(
-                      height: 190,
+                      height: context.responsiveValue(
+                        compact: 175,
+                        medium: 195,
+                        expanded: 220,
+                      ),
                       child: PieChart(
                         PieChartData(
                           centerSpaceRadius: 42,

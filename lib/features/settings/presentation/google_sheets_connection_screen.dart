@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 import '../../data/expense_data_provider.dart';
 
 class GoogleSheetsConnectionScreen extends ConsumerStatefulWidget {
@@ -48,8 +49,7 @@ class _GoogleSheetsConnectionScreenState
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
       appBar: AppBar(title: const Text('Google Sheets connection')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.pageCompact),
+      body: ResponsiveListView(
         children: <Widget>[
           SurfaceCard(
             child: Column(

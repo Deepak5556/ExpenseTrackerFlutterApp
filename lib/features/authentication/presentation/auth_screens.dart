@@ -7,6 +7,8 @@ import '../../../core/errors/auth_failure.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
+import '../../../core/utils/window_size_class.dart';
 import '../auth_controller.dart';
 import '../auth_state.dart';
 
@@ -43,16 +45,21 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: _fade,
             child: ScaleTransition(
               scale: Tween<double>(begin: 0.88, end: 1).animate(_fade),
-              child: const Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  WalletMark(size: 76),
+                  WalletMark(
+                    size: context.responsiveValue(compact: 66, medium: 76),
+                  ),
                   SizedBox(height: 20),
                   Text(
                     'Expense Journal & Budget',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: context.responsiveValue(
+                        compact: 20,
+                        medium: 22,
+                      ),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -127,14 +134,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   itemCount: _slides.length,
                   onPageChanged: (int value) => setState(() => _page = value),
                   itemBuilder: (BuildContext context, int index) => Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+                    padding: EdgeInsets.fromLTRB(
+                      context.windowSizeClass.pagePadding,
+                      12,
+                      context.windowSizeClass.pagePadding,
+                      20,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Container(
                           width: double.infinity,
                           constraints: const BoxConstraints(maxWidth: 390),
-                          height: 280,
+                          height: context.responsiveValue(
+                            compact: 250,
+                            medium: 280,
+                            expanded: 310,
+                          ),
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -527,8 +543,7 @@ class ConnectedScreen extends ConsumerWidget {
     final GoogleSignInAccount user = state.user;
     return Scaffold(
       appBar: AppBar(title: const Text('Google connected')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.x5),
+      body: ResponsiveListView(
         children: <Widget>[
           SurfaceCard(
             child: Column(

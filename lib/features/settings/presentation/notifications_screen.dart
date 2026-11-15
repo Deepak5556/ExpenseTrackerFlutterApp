@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -29,8 +30,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.pageBackground,
     appBar: AppBar(title: const Text('Notifications')),
-    body: ListView(
-      padding: const EdgeInsets.all(AppSpacing.pageCompact),
+    body: ResponsiveListView(
       children: <Widget>[
         SurfaceCard(
           child: Column(

@@ -6,6 +6,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
+import '../../../core/utils/window_size_class.dart';
 import '../../data/expense_data_provider.dart';
 import '../../../models/expense_transaction.dart';
 
@@ -83,8 +85,7 @@ class _TransactionDetailScreenState
                       ),
                     ),
             )
-          : ListView(
-              padding: const EdgeInsets.all(AppSpacing.pageCompact),
+          : ResponsiveListView(
               children: <Widget>[
                 SurfaceCard(
                   child: Column(
@@ -256,8 +257,10 @@ class _DetailRow extends StatelessWidget {
       children: <Widget>[
         Icon(icon, color: AppColors.labels, size: 20),
         const SizedBox(width: AppSpacing.x3),
-        SizedBox(
-          width: 110,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: context.responsiveValue(compact: 92, medium: 140),
+          ),
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium

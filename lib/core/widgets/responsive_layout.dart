@@ -81,3 +81,39 @@ class ResponsiveGrid extends StatelessWidget {
     },
   );
 }
+
+/// A drop-in list body that keeps existing screen scrolling while limiting
+/// line length and card width on tablets and landscape devices.
+class ResponsiveListView extends StatelessWidget {
+  const ResponsiveListView({
+    required this.children,
+    this.padding,
+    this.controller,
+    this.physics,
+    super.key,
+  });
+
+  final List<Widget> children;
+  final EdgeInsetsGeometry? padding;
+  final ScrollController? controller;
+  final ScrollPhysics? physics;
+
+  @override
+  Widget build(BuildContext context) {
+    final sizeClass = context.windowSizeClass;
+    return ListView(
+      controller: controller,
+      physics: physics,
+      padding: padding ?? EdgeInsets.all(sizeClass.pagePadding),
+      children: <Widget>[
+        for (final child in children)
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: sizeClass.contentMaxWidth),
+              child: child,
+            ),
+          ),
+      ],
+    );
+  }
+}

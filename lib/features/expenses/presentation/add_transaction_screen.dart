@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
 import '../../data/expense_data_provider.dart';
@@ -75,8 +76,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       appBar: AppBar(title: const Text('Add transaction')),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.pageCompact),
+        child: ResponsiveListView(
           children: <Widget>[
             SegmentedButton<TransactionType>(
               segments: const <ButtonSegment<TransactionType>>[

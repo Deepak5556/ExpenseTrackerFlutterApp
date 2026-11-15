@@ -7,6 +7,7 @@ import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/responsive_layout.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -94,9 +95,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           ),
         ],
       ),
-      body: ListView(
+      body: ResponsiveListView(
         key: const PageStorageKey<String>('journal-scroll'),
-        padding: const EdgeInsets.all(AppSpacing.pageCompact),
         children: <Widget>[
           SearchBar(
             key: const ValueKey<String>('journal-search'),
