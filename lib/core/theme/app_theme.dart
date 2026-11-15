@@ -20,6 +20,8 @@ ThemeData buildLightTheme() {
     scaffoldBackgroundColor: AppColors.pageBackground,
     fontFamily: AppTypography.family,
     textTheme: AppTypography.textTheme(AppColors.textPrimary),
+    visualDensity: VisualDensity.standard,
+    iconTheme: const IconThemeData(size: 22, color: AppColors.textSecondary),
     extensions: const <ThemeExtension<dynamic>>[AppThemeExtension.light],
     appBarTheme: AppBarThemeData(
       backgroundColor: AppColors.pageBackground,
@@ -127,6 +129,28 @@ ThemeData buildLightTheme() {
               : AppColors.textSecondary,
         ).labelSmall,
       ),
+    ),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: AppColors.card,
+      selectedIconTheme: const IconThemeData(color: AppColors.brandStart),
+      unselectedIconTheme: const IconThemeData(color: AppColors.labels),
+      selectedLabelTextStyle: AppTypography.textTheme(AppColors.brandStart)
+          .labelMedium,
+      unselectedLabelTextStyle: AppTypography.textTheme(AppColors.labels)
+          .labelMedium,
+      indicatorColor: AppColors.orangePillSurface,
+      useIndicator: true,
+    ),
+    listTileTheme: ListTileThemeData(
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+      minVerticalPadding: AppSpacing.x2,
+      iconColor: AppColors.brandStart,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.tile),
+      ),
+      titleTextStyle: AppTypography.textTheme(AppColors.textPrimary).bodyMedium,
+      subtitleTextStyle: AppTypography.textTheme(AppColors.textSecondary)
+          .bodySmall,
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: AppColors.card,

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_design_tokens.dart';
 import '../utils/money_formatter.dart';
+import '../utils/window_size_class.dart';
 
 class GradientHeader extends StatelessWidget {
   const GradientHeader({required this.child, this.padding, super.key});
@@ -13,6 +14,7 @@ class GradientHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double safeTop = MediaQuery.paddingOf(context).top;
+    final double pagePadding = context.windowSizeClass.pagePadding;
     return ClipPath(
       clipper: const _CurvedBottomClipper(),
       child: Container(
@@ -21,9 +23,9 @@ class GradientHeader extends StatelessWidget {
         padding:
             padding ??
             EdgeInsets.fromLTRB(
-              AppSpacing.pageCompact,
+              pagePadding,
               safeTop + AppSpacing.x4,
-              AppSpacing.pageCompact,
+              pagePadding,
               AppSpacing.x10 + AppSpacing.x3,
             ),
         child: child,
@@ -125,6 +127,7 @@ class FloatingActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.windowSizeClass.isCompact;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -136,11 +139,19 @@ class FloatingActionCard extends StatelessWidget {
         horizontal: AppSpacing.x2,
         vertical: AppSpacing.x3,
       ),
-      child: Row(
+      child: Wrap(
+        alignment: WrapAlignment.spaceAround,
         children: actions
             .map(
-              (QuickAction action) =>
-                  Expanded(child: _QuickActionButton(action: action)),
+              (QuickAction action) => SizedBox(
+                width: compact
+                    ? (MediaQuery.sizeOf(context).width -
+                              AppSpacing.pageCompact * 2 -
+                              AppSpacing.x4) /
+                          actions.length
+                    : 104,
+                child: _QuickActionButton(action: action),
+              ),
             )
             .toList(growable: false),
       ),
@@ -155,6 +166,11 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double iconBox = context.responsiveValue(
+      compact: 38,
+      medium: 42,
+      expanded: 46,
+    );
     return Semantics(
       button: true,
       label: action.label,
@@ -167,13 +183,17 @@ class _QuickActionButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Container(
-                width: 40,
-                height: 40,
+                width: iconBox,
+                height: iconBox,
                 decoration: BoxDecoration(
                   color: action.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.tile),
                 ),
-                child: Icon(action.icon, color: action.color, size: 22),
+                child: Icon(
+                  action.icon,
+                  color: action.color,
+                  size: iconBox * .52,
+                ),
               ),
               const SizedBox(height: AppSpacing.x1),
               Text(
@@ -213,6 +233,7 @@ class KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.windowSizeClass.isCompact;
     final TextStyle? labelStyle = Theme.of(context).textTheme.labelSmall;
     final Widget contents = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +276,7 @@ class KpiCard extends StatelessWidget {
               color:
                   valueColor ??
                   (emphasized ? Colors.white : AppColors.textPrimary),
-              fontSize: AppTypography.kpiValue,
+              fontSize: compact ? 23 : AppTypography.kpiValue,
               letterSpacing: -0.5,
               fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
             ),
@@ -286,14 +307,16 @@ class KpiCard extends StatelessWidget {
           boxShadow: AppShadows.hero,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+          padding: EdgeInsets.all(
+            compact ? AppSpacing.x3 : AppSpacing.cardPadding,
+          ),
           child: contents,
         ),
       );
     }
 
     return SurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      padding: EdgeInsets.all(compact ? AppSpacing.x3 : AppSpacing.cardPadding),
       child: contents,
     );
   }
@@ -547,13 +570,17 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Container(
-              width: 64,
-              height: 64,
+              width: context.responsiveValue(compact: 56, medium: 64),
+              height: context.responsiveValue(compact: 56, medium: 64),
               decoration: BoxDecoration(
                 color: AppColors.orangePillSurface,
                 borderRadius: BorderRadius.circular(AppRadius.card),
               ),
-              child: Icon(icon, color: AppColors.accentOrange, size: 30),
+              child: Icon(
+                icon,
+                color: AppColors.accentOrange,
+                size: context.responsiveValue(compact: 27, medium: 30),
+              ),
             ),
             const SizedBox(height: AppSpacing.x4),
             Text(
@@ -629,6 +656,7 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = context.windowSizeClass.isCompact;
     return SafeArea(
       top: false,
       child: Container(
@@ -638,7 +666,7 @@ class AppBottomNav extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
         child: SizedBox(
-          height: 70,
+          height: compact ? 68 : 74,
           child: Row(
             children: <Widget>[
               _navButton(context, itemIndex: 0, branchIndex: 0),
@@ -663,13 +691,13 @@ class AppBottomNav extends StatelessWidget {
                             shadowColor: AppColors.pressed.withValues(
                               alpha: 0.35,
                             ),
-                            child: const SizedBox(
-                              width: 42,
-                              height: 42,
+                            child: SizedBox(
+                              width: compact ? 42 : 46,
+                              height: compact ? 42 : 46,
                               child: Icon(
                                 Icons.add_rounded,
                                 color: Colors.white,
-                                size: 28,
+                                size: compact ? 26 : 28,
                               ),
                             ),
                           ),
@@ -722,7 +750,7 @@ class AppBottomNav extends StatelessWidget {
                 Icon(
                   selected ? item.selectedIcon : item.icon,
                   color: color,
-                  size: 22,
+                  size: context.responsiveValue(compact: 21, medium: 23),
                 ),
                 const SizedBox(height: AppSpacing.x1),
                 Text(

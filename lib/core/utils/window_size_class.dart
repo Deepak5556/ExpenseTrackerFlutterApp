@@ -14,6 +14,18 @@ extension WindowSizeClassLayout on WindowSizeClass {
   };
 
   double get pagePadding => isCompact ? 20 : 24;
+
+  double get contentMaxWidth => switch (this) {
+    WindowSizeClass.compact => double.infinity,
+    WindowSizeClass.medium => 760,
+    WindowSizeClass.expanded => 1200,
+  };
+
+  double get compactScale => switch (this) {
+    WindowSizeClass.compact => 0.94,
+    WindowSizeClass.medium => 1,
+    WindowSizeClass.expanded => 1.06,
+  };
 }
 
 WindowSizeClass windowSizeClassForWidth(double width) {
@@ -24,3 +36,17 @@ WindowSizeClass windowSizeClassForWidth(double width) {
 
 WindowSizeClass windowSizeClassOf(BuildContext context) =>
     windowSizeClassForWidth(MediaQuery.sizeOf(context).width);
+
+extension ResponsiveContext on BuildContext {
+  WindowSizeClass get windowSizeClass => windowSizeClassOf(this);
+
+  double responsiveValue({
+    required double compact,
+    double? medium,
+    double? expanded,
+  }) => switch (windowSizeClass) {
+    WindowSizeClass.compact => compact,
+    WindowSizeClass.medium => medium ?? compact,
+    WindowSizeClass.expanded => expanded ?? medium ?? compact,
+  };
+}

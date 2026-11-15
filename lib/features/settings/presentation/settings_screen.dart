@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/widgets/responsive_layout.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -12,58 +13,61 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
       appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.pageCompact),
-        children: <Widget>[
-          _SettingsGroup(
-            title: 'Account',
-            items: <_SettingsItem>[
-              _SettingsItem('Profile', Icons.person_outline, '/profile'),
-              _SettingsItem(
-                'Notifications',
-                Icons.notifications_outlined,
-                '/notifications',
-              ),
-            ],
-          ),
-          _SettingsGroup(
-            title: 'Finances',
-            items: <_SettingsItem>[
-              _SettingsItem(
-                'Monthly salary',
-                Icons.payments_outlined,
-                '/salary',
-              ),
-              _SettingsItem(
-                'Categories',
-                Icons.category_outlined,
-                '/categories',
-              ),
-              _SettingsItem('Budgets', Icons.savings_outlined, '/budgets'),
-            ],
-          ),
-          _SettingsGroup(
-            title: 'Data and privacy',
-            items: <_SettingsItem>[
-              _SettingsItem(
-                'Google Sheets',
-                Icons.table_chart_outlined,
-                '/connect-spreadsheet',
-              ),
-              _SettingsItem(
-                'Privacy and terms',
-                Icons.privacy_tip_outlined,
-                '/privacy',
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          const Text(
-            'Your transactions will be stored only in the Google Sheet you authorize.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-        ],
+      body: ResponsivePage(
+        scrollable: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _SettingsGroup(
+              title: 'Account',
+              items: <_SettingsItem>[
+                _SettingsItem('Profile', Icons.person_outline, '/profile'),
+                _SettingsItem(
+                  'Notifications',
+                  Icons.notifications_outlined,
+                  '/notifications',
+                ),
+              ],
+            ),
+            _SettingsGroup(
+              title: 'Finances',
+              items: <_SettingsItem>[
+                _SettingsItem(
+                  'Monthly salary',
+                  Icons.payments_outlined,
+                  '/salary',
+                ),
+                _SettingsItem(
+                  'Categories',
+                  Icons.category_outlined,
+                  '/categories',
+                ),
+                _SettingsItem('Budgets', Icons.savings_outlined, '/budgets'),
+              ],
+            ),
+            _SettingsGroup(
+              title: 'Data and privacy',
+              items: <_SettingsItem>[
+                _SettingsItem(
+                  'Google Sheets',
+                  Icons.table_chart_outlined,
+                  '/connect-spreadsheet',
+                ),
+                _SettingsItem(
+                  'Privacy and terms',
+                  Icons.privacy_tip_outlined,
+                  '/privacy',
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.x4),
+            const Text(
+              'Your transactions will be stored only in the Google Sheet you authorize.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }
