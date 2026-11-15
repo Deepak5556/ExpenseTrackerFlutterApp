@@ -8,6 +8,7 @@ import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:googleapis_auth/googleapis_auth.dart' as google_auth;
 
 import '../core/utils/google_retry.dart';
+import '../core/errors/app_failure.dart';
 import '../models/expense_category.dart';
 import '../models/expense_transaction.dart';
 import '../models/transaction_model.dart' as model;
@@ -821,15 +822,16 @@ extension Phase4GoogleSheetsService on GoogleSheetsService {
         .skip(1)
         .any((r) => r.isNotEmpty && '${r[0]}' == item.transactionId))
       throw StateError('Duplicate transaction ID.');
-    try {
-      await appendRow(client, id, 'Transactions!A:K', item.toSheetRow());
-    } on TimeoutException {
-      final check = await readRows(client, id, 'Transactions', 'A:K');
-      if (!check
-          .skip(1)
-          .any((r) => r.isNotEmpty && '${r[0]}' == item.transactionId))
-        rethrow;
-    }
+    await appendWithIdempotencyCheck(
+      append: () =>
+          appendRow(client, id, 'Transactions!A:K', item.toSheetRow()),
+      alreadyExists: () async {
+        final check = await readRows(client, id, 'Transactions', 'A:K');
+        return check
+            .skip(1)
+            .any((row) => row.isNotEmpty && '${row[0]}' == item.transactionId);
+      },
+    );
   }
 
   Future<int> _transactionRow(
@@ -1047,4 +1049,28 @@ ParsedTransactions parsePhase4Transactions(List<List<Object?>> rows) {
     }
   }
   return ParsedTransactions(List.unmodifiable(valid), invalid);
+}
+
+/// Checks for a committed row before retrying an append with an unknown result.
+/// The callbacks make this safe to exercise with a fake store in unit tests.
+Future<void> appendWithIdempotencyCheck({
+  required Future<void> Function() append,
+  required Future<bool> Function() alreadyExists,
+  int maxAttempts = 2,
+  Future<void> Function(Duration)? wait,
+}) async {
+  for (var attempt = 0; ; attempt++) {
+    try {
+      await append();
+      return;
+    } catch (error) {
+      if (!mapGoogleFailure(error).retryable || attempt + 1 >= maxAttempts) {
+        rethrow;
+      }
+      if (await alreadyExists()) return;
+      await (wait ?? Future<void>.delayed)(
+        Duration(milliseconds: 250 * (1 << attempt)),
+      );
+    }
+  }
 }

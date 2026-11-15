@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:expense_journal_budget/models/transaction_model.dart';
 import 'package:expense_journal_budget/services/google_sheets_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,4 +77,60 @@ void main() {
     expect(result.transactions.single.amountMinor, 1250);
     expect(result.invalidRows, 2);
   });
+
+  test('row fingerprint detects a direct edit in Google Sheets', () {
+    final row = <Object?>[
+      'a',
+      'expense',
+      'Food',
+      1250,
+      'food',
+      'Food',
+      '2026-11-15|09:30',
+      '',
+      '',
+      '',
+      'v1',
+    ];
+    final version = TransactionModel.fromSheetRow(row).updatedAt;
+    final edited = List<Object?>.of(row)..[2] = 'Edited in Sheets';
+    expect(TransactionModel.fromSheetRow(edited).updatedAt, isNot(version));
+  });
+
+  test(
+    'unknown append outcome checks for the committed ID before retry',
+    () async {
+      var attempts = 0;
+      var stored = false;
+      await appendWithIdempotencyCheck(
+        append: () async {
+          attempts++;
+          stored = true;
+          throw TimeoutException('write committed but response timed out');
+        },
+        alreadyExists: () async => stored,
+        wait: (_) async {},
+      );
+      expect(attempts, 1);
+    },
+  );
+
+  test(
+    'unknown append retries only after confirming the row is absent',
+    () async {
+      var attempts = 0;
+      var stored = false;
+      await appendWithIdempotencyCheck(
+        append: () async {
+          attempts++;
+          if (attempts == 1) throw TimeoutException('not committed');
+          stored = true;
+        },
+        alreadyExists: () async => stored,
+        wait: (_) async {},
+      );
+      expect(attempts, 2);
+      expect(stored, isTrue);
+    },
+  );
 }
