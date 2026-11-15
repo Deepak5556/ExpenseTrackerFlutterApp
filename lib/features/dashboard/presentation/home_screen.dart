@@ -11,6 +11,7 @@ import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/window_size_class.dart';
 import '../../../core/widgets/design_system_widgets.dart';
 import '../../../core/widgets/responsive_builder.dart';
+import '../../../core/widgets/responsive_layout.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -95,11 +96,27 @@ class HomeScreen extends ConsumerWidget {
                             children: <Widget>[
                               Row(
                                 children: <Widget>[
-                                  const CircleAvatar(
-                                    backgroundColor: Color(0x33FFFFFF),
-                                    foregroundColor: Colors.white,
-                                    child: Icon(
+                                  Container(
+                                    width: context.responsiveValue(
+                                      compact: 42,
+                                      medium: 46,
+                                    ),
+                                    height: context.responsiveValue(
+                                      compact: 42,
+                                      medium: 46,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0x24FFFFFF),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.tile,
+                                      ),
+                                      border: Border.all(
+                                        color: const Color(0x38FFFFFF),
+                                      ),
+                                    ),
+                                    child: const Icon(
                                       Icons.account_balance_wallet_rounded,
+                                      color: Colors.white,
                                     ),
                                   ),
                                   const SizedBox(width: AppSpacing.x2),
@@ -118,15 +135,31 @@ class HomeScreen extends ConsumerWidget {
                                               .titleMedium
                                               ?.copyWith(color: Colors.white),
                                         ),
-                                        Text(
-                                          formatMonthLabel(now),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelSmall
-                                              ?.copyWith(
-                                                color: AppColors
-                                                    .onGradientSecondary,
-                                              ),
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                            top: AppSpacing.x1,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.x2,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0x1FFFFFFF),
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.pill,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            formatMonthLabel(now),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(
+                                                  color: AppColors
+                                                      .onGradientSecondary,
+                                                  letterSpacing: 0,
+                                                ),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -225,69 +258,38 @@ class HomeScreen extends ConsumerWidget {
                           AppSpacing.x4,
                         ),
                         sliver: SliverToBoxAdapter(
-                          child: LayoutBuilder(
-                            builder:
-                                (
-                                  BuildContext context,
-                                  BoxConstraints constraints,
-                                ) {
-                                  final int columns =
-                                      sizeClass == WindowSizeClass.expanded
-                                      ? 4
-                                      : 2;
-                                  const double gap = AppSpacing.x2;
-                                  final double width =
-                                      (constraints.maxWidth -
-                                          gap * (columns - 1)) /
-                                      columns;
-                                  return Wrap(
-                                    spacing: gap,
-                                    runSpacing: gap,
-                                    children: <Widget>[
-                                      SizedBox(
-                                        width: width,
-                                        child: KpiCard(
-                                          label: 'Monthly salary',
-                                          value: formatMoney(salary),
-                                          detail: data.isConnected
-                                              ? 'Configured in Settings'
-                                              : 'Connect sheet to configure',
-                                          icon: Icons.account_balance_outlined,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: width,
-                                        child: KpiCard(
-                                          label: 'Expenses',
-                                          value: formatMoney(expenses),
-                                          detail: '$expenseCount transactions',
-                                          icon: Icons.trending_down_rounded,
-                                          valueColor: AppColors.brandStart,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: width,
-                                        child: KpiCard(
-                                          label: 'Income',
-                                          value: formatMoney(income),
-                                          detail: 'This month',
-                                          icon: Icons.trending_up_rounded,
-                                          valueColor: AppColors.income,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: width,
-                                        child: KpiCard(
-                                          label: 'Savings rate',
-                                          value:
-                                              '${salary <= 0 ? 0 : ((remaining / salary) * 100).clamp(0, 100).round()}%',
-                                          detail: 'Based on monthly balance',
-                                          icon: Icons.savings_outlined,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
+                          child: ResponsiveGrid(
+                            children: <Widget>[
+                              KpiCard(
+                                label: 'Monthly salary',
+                                value: formatMoney(salary),
+                                detail: data.isConnected
+                                    ? 'Configured in Settings'
+                                    : 'Connect sheet to configure',
+                                icon: Icons.account_balance_outlined,
+                              ),
+                              KpiCard(
+                                label: 'Expenses',
+                                value: formatMoney(expenses),
+                                detail: '$expenseCount transactions',
+                                icon: Icons.trending_down_rounded,
+                                valueColor: AppColors.brandStart,
+                              ),
+                              KpiCard(
+                                label: 'Income',
+                                value: formatMoney(income),
+                                detail: 'This month',
+                                icon: Icons.trending_up_rounded,
+                                valueColor: AppColors.income,
+                              ),
+                              KpiCard(
+                                label: 'Savings rate',
+                                value:
+                                    '${salary <= 0 ? 0 : ((remaining / salary) * 100).clamp(0, 100).round()}%',
+                                detail: 'Based on monthly balance',
+                                icon: Icons.savings_outlined,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -525,7 +527,11 @@ class _MonthlyTrajectory extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.x3),
           SizedBox(
-            height: 200,
+            height: context.responsiveValue(
+              compact: 190,
+              medium: 218,
+              expanded: 238,
+            ),
             child: BarChart(
               BarChartData(
                 maxY: maxValue == 0 ? 100 : maxValue / 100 * 1.2,
@@ -663,11 +669,13 @@ class _CategorySummary extends StatelessWidget {
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(width: AppSpacing.x2),
-                    SizedBox(
-                      width: 44,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 38),
                       child: Text(
                         '${total == 0 ? 0 : ((totals[category.id] ?? 0) * 100 / total).round()}%',
                         textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ),
@@ -705,12 +713,21 @@ class _TransactionTile extends StatelessWidget {
     ),
     title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
     subtitle: Text('${item.categoryName} · ${formatDate(item.occurredAt)}'),
-    trailing: Text(
-      '${item.type == TransactionType.income ? '+' : '−'}${formatMoney(item.amountMinor)}',
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: item.type == TransactionType.income
-            ? AppColors.income
-            : AppColors.brandStart,
+    trailing: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: context.responsiveValue(compact: 104, medium: 144),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Text(
+          '${item.type == TransactionType.income ? '+' : '−'}${formatMoney(item.amountMinor)}',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: item.type == TransactionType.income
+                ? AppColors.income
+                : AppColors.brandStart,
+          ),
+        ),
       ),
     ),
   );
