@@ -127,7 +127,6 @@ class FloatingActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = context.windowSizeClass.isCompact;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -139,21 +138,23 @@ class FloatingActionCard extends StatelessWidget {
         horizontal: AppSpacing.x2,
         vertical: AppSpacing.x3,
       ),
-      child: Wrap(
-        alignment: WrapAlignment.spaceAround,
-        children: actions
-            .map(
-              (QuickAction action) => SizedBox(
-                width: compact
-                    ? (MediaQuery.sizeOf(context).width -
-                              AppSpacing.pageCompact * 2 -
-                              AppSpacing.x4) /
-                          actions.length
-                    : 104,
-                child: _QuickActionButton(action: action),
-              ),
-            )
-            .toList(growable: false),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final double itemWidth =
+              (constraints.maxWidth / (actions.isEmpty ? 1 : actions.length)) -
+              0.5;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: actions
+                .map(
+                  (QuickAction action) => SizedBox(
+                    width: itemWidth.clamp(48.0, 140.0),
+                    child: _QuickActionButton(action: action),
+                  ),
+                )
+                .toList(growable: false),
+          );
+        },
       ),
     );
   }
@@ -196,13 +197,16 @@ class _QuickActionButton extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.x1),
-              Text(
-                action.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  letterSpacing: 0,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  action.label,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
             ],
@@ -656,70 +660,82 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
     final compact = context.windowSizeClass.isCompact;
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.card,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
-        child: SizedBox(
-          height: compact ? 68 : 74,
-          child: Row(
-            children: <Widget>[
-              _navButton(context, itemIndex: 0, branchIndex: 0),
-              _navButton(context, itemIndex: 1, branchIndex: 1),
-              Expanded(
-                child: Semantics(
-                  button: true,
-                  label: 'Add expense',
-                  child: InkWell(
-                    onTap: onAdd,
-                    key: const ValueKey<String>('bottom-nav-add'),
-                    borderRadius: BorderRadius.circular(AppRadius.tile),
-                    child: Transform.translate(
-                      offset: const Offset(0, -7),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Material(
-                            color: AppColors.brandStart,
-                            shape: const CircleBorder(),
-                            elevation: 4,
-                            shadowColor: AppColors.pressed.withValues(
-                              alpha: 0.35,
-                            ),
-                            child: SizedBox(
-                              width: compact ? 42 : 46,
-                              height: compact ? 42 : 46,
-                              child: Icon(
-                                Icons.add_rounded,
-                                color: Colors.white,
-                                size: compact ? 26 : 28,
-                              ),
+    final double textScale = mediaQuery.textScaler.scale(1.0).clamp(0.9, 1.25);
+    final double bottomInset = mediaQuery.padding.bottom;
+    final double baseHeight = (compact ? 66.0 : 72.0) * textScale;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.x2,
+        0,
+        AppSpacing.x2,
+        bottomInset > 0 ? bottomInset : AppSpacing.x1,
+      ),
+      child: SizedBox(
+        height: baseHeight,
+        child: Row(
+          children: <Widget>[
+            _navButton(context, itemIndex: 0, branchIndex: 0),
+            _navButton(context, itemIndex: 1, branchIndex: 1),
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: 'Add expense',
+                child: InkWell(
+                  onTap: onAdd,
+                  key: const ValueKey<String>('bottom-nav-add'),
+                  borderRadius: BorderRadius.circular(AppRadius.tile),
+                  child: Transform.translate(
+                    offset: const Offset(0, -6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Material(
+                          color: AppColors.brandStart,
+                          shape: const CircleBorder(),
+                          elevation: 4,
+                          shadowColor: AppColors.pressed.withValues(
+                            alpha: 0.35,
+                          ),
+                          child: SizedBox(
+                            width: compact ? 44 : 48,
+                            height: compact ? 44 : 48,
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: Colors.white,
+                              size: compact ? 26 : 28,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.x1),
-                          Text(
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
                             'Add',
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: AppColors.brandStart,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 0,
                                 ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-              _navButton(context, itemIndex: 2, branchIndex: 3),
-              _navButton(context, itemIndex: 3, branchIndex: 4),
-            ],
-          ),
+            ),
+            _navButton(context, itemIndex: 2, branchIndex: 3),
+            _navButton(context, itemIndex: 3, branchIndex: 4),
+          ],
         ),
       ),
     );
@@ -743,26 +759,222 @@ class AppBottomNav extends StatelessWidget {
           onTap: () => onDestinationSelected(branchIndex),
           borderRadius: BorderRadius.circular(AppRadius.tile),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Icon(
                   selected ? item.selectedIcon : item.icon,
                   color: color,
-                  size: context.responsiveValue(compact: 21, medium: 23),
+                  size: context.responsiveValue(compact: 22, medium: 24),
                 ),
-                const SizedBox(height: AppSpacing.x1),
-                Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall
-                      ?.copyWith(color: color, letterSpacing: 0),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      letterSpacing: 0,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Professional elevated financial dashboard card matching the design reference.
+class DashboardCard extends StatelessWidget {
+  const DashboardCard({
+    required this.child,
+    this.title,
+    this.subtitle,
+    this.leading,
+    this.action,
+    this.padding = const EdgeInsets.all(AppSpacing.cardPadding),
+    this.margin = EdgeInsets.zero,
+    this.onTap,
+    super.key,
+  });
+
+  final Widget child;
+  final String? title;
+  final String? subtitle;
+  final Widget? leading;
+  final Widget? action;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SurfaceCard(
+      margin: margin,
+      padding: padding,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (title != null) ...<Widget>[
+            Row(
+              children: <Widget>[
+                if (leading != null) ...<Widget>[
+                  leading!,
+                  const SizedBox(width: AppSpacing.x2),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        title!,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (subtitle != null) ...<Widget>[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                ?action,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.x3),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Standardized loading indicator for components and whole screens.
+class AppLoadingIndicator extends StatelessWidget {
+  const AppLoadingIndicator({
+    this.message,
+    this.size = 36.0,
+    this.color = AppColors.brandStart,
+    super.key,
+  });
+
+  final String? message;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            SizedBox(
+              width: size,
+              height: size,
+              child: CircularProgressIndicator(
+                strokeWidth: 3.0,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            ),
+            if (message != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.x3),
+              Text(
+                message!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Alias for EmptyState to provide consistent naming across architecture.
+typedef AppEmptyState = EmptyState;
+
+/// Standardized error state widget with recovery action.
+class AppErrorState extends StatelessWidget {
+  const AppErrorState({
+    required this.message,
+    this.title = 'Something went wrong',
+    this.onRetry,
+    this.retryLabel = 'Try again',
+    super.key,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback? onRetry;
+  final String retryLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.orangePillSurface,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.brandStart,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            if (onRetry != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.x4),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: Text(retryLabel),
+              ),
+            ],
+          ],
         ),
       ),
     );

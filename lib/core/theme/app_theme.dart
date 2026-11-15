@@ -116,6 +116,11 @@ ThemeData buildLightTheme() {
         textStyle: AppTypography.textTheme(AppColors.brandStart).labelLarge,
       ),
     ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        minimumSize: const Size(48, 48),
+      ),
+    ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.card,
       surfaceTintColor: Colors.transparent,

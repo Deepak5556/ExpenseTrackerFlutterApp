@@ -45,7 +45,38 @@ class ResponsivePage extends StatelessWidget {
   }
 }
 
-/// Calculates equal-width tiles without a fixed card width.
+/// Adaptive layout builder switching between compact, medium, and expanded views,
+/// or handling portrait vs. landscape orientations seamlessly.
+class ResponsiveLayout extends StatelessWidget {
+  const ResponsiveLayout({
+    required this.compact,
+    this.medium,
+    this.expanded,
+    this.landscape,
+    super.key,
+  });
+
+  final WidgetBuilder compact;
+  final WidgetBuilder? medium;
+  final WidgetBuilder? expanded;
+  final WidgetBuilder? landscape;
+
+  @override
+  Widget build(BuildContext context) {
+    final orientation = MediaQuery.orientationOf(context);
+    if (landscape != null && orientation == Orientation.landscape) {
+      return landscape!(context);
+    }
+    return switch (context.windowSizeClass) {
+      WindowSizeClass.compact => compact(context),
+      WindowSizeClass.medium => (medium ?? compact)(context),
+      WindowSizeClass.expanded => (expanded ?? medium ?? compact)(context),
+    };
+  }
+}
+
+/// Calculates equal-width tiles without fixed card widths, with floating-point
+/// rounding protection so tiles never wrap prematurely.
 class ResponsiveGrid extends StatelessWidget {
   const ResponsiveGrid({
     required this.children,
@@ -53,6 +84,7 @@ class ResponsiveGrid extends StatelessWidget {
     this.mediumColumns = 2,
     this.expandedColumns = 4,
     this.spacing = AppSpacing.x2,
+    this.runSpacing,
     super.key,
   });
 
@@ -61,6 +93,7 @@ class ResponsiveGrid extends StatelessWidget {
   final int mediumColumns;
   final int expandedColumns;
   final double spacing;
+  final double? runSpacing;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -70,10 +103,17 @@ class ResponsiveGrid extends StatelessWidget {
         WindowSizeClass.medium => mediumColumns,
         WindowSizeClass.expanded => expandedColumns,
       };
-      final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+      final maxWidth = constraints.maxWidth.isFinite
+          ? constraints.maxWidth
+          : MediaQuery.sizeOf(context).width;
+      final rawWidth = (maxWidth - (spacing * (columns - 1))) / columns;
+      // Guard against double precision overflow in Wrap
+      final width = (rawWidth - 0.05).clamp(1.0, double.infinity);
+      final verticalSpacing = runSpacing ?? spacing;
+
       return Wrap(
         spacing: spacing,
-        runSpacing: spacing,
+        runSpacing: verticalSpacing,
         children: <Widget>[
           for (final child in children) SizedBox(width: width, child: child),
         ],
@@ -90,6 +130,7 @@ class ResponsiveListView extends StatelessWidget {
     this.padding,
     this.controller,
     this.physics,
+    this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.onDrag,
     super.key,
   });
 
@@ -97,6 +138,7 @@ class ResponsiveListView extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final ScrollController? controller;
   final ScrollPhysics? physics;
+  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +146,7 @@ class ResponsiveListView extends StatelessWidget {
     return ListView(
       controller: controller,
       physics: physics,
+      keyboardDismissBehavior: keyboardDismissBehavior,
       padding: padding ?? EdgeInsets.all(sizeClass.pagePadding),
       children: <Widget>[
         for (final child in children)
@@ -115,5 +158,49 @@ class ResponsiveListView extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// Responsive text that scales down gracefully instead of overflowing or clipping.
+class ResponsiveText extends StatelessWidget {
+  const ResponsiveText(
+    this.text, {
+    this.style,
+    this.maxLines = 1,
+    this.textAlign,
+    this.overflow = TextOverflow.ellipsis,
+    this.scaleDown = true,
+    super.key,
+  });
+
+  final String text;
+  final TextStyle? style;
+  final int maxLines;
+  final TextAlign? textAlign;
+  final TextOverflow overflow;
+  final bool scaleDown;
+
+  @override
+  Widget build(BuildContext context) {
+    final textWidget = Text(
+      text,
+      style: style,
+      maxLines: maxLines,
+      textAlign: textAlign,
+      overflow: overflow,
+    );
+
+    if (scaleDown) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: textAlign == TextAlign.center
+            ? Alignment.center
+            : textAlign == TextAlign.right
+            ? Alignment.centerRight
+            : Alignment.centerLeft,
+        child: textWidget,
+      );
+    }
+    return textWidget;
   }
 }
