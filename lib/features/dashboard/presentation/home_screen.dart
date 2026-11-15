@@ -78,343 +78,366 @@ class HomeScreen extends ConsumerWidget {
                 )
                 .length;
 
-            return SafeArea(
-              top: false,
-              bottom: false,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AppSpacing.contentMaxWidth,
-                  ),
-                  child: CustomScrollView(
-                    key: const PageStorageKey<String>('home-scroll'),
-                    slivers: <Widget>[
-                      SliverToBoxAdapter(
-                        child: GradientHeader(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Row(
-                                children: <Widget>[
-                                  Container(
-                                    width: context.responsiveValue(
-                                      compact: 42,
-                                      medium: 46,
-                                    ),
-                                    height: context.responsiveValue(
-                                      compact: 42,
-                                      medium: 46,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0x24FFFFFF),
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.tile,
+            return RefreshIndicator(
+              color: AppColors.brandStart,
+              backgroundColor: AppColors.card,
+              onRefresh: () async {
+                if (data.isConnected) {
+                  await ref.read(expenseDataProvider.notifier).refresh();
+                }
+              },
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: AppSpacing.contentMaxWidth,
+                    ),
+                    child: CustomScrollView(
+                      key: const PageStorageKey<String>('home-scroll'),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: <Widget>[
+                        SliverToBoxAdapter(
+                          child: GradientHeader(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Row(
+                                  children: <Widget>[
+                                    Container(
+                                      width: context.responsiveValue(
+                                        compact: 42,
+                                        medium: 46,
                                       ),
-                                      border: Border.all(
-                                        color: const Color(0x38FFFFFF),
+                                      height: context.responsiveValue(
+                                        compact: 42,
+                                        medium: 46,
                                       ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.account_balance_wallet_rounded,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.x2),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(
-                                          data.accountName ??
-                                              'Expense Journal & Budget',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(color: Colors.white),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0x24FFFFFF),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.tile,
                                         ),
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                            top: AppSpacing.x1,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: AppSpacing.x2,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0x1FFFFFFF),
-                                            borderRadius: BorderRadius.circular(
-                                              AppRadius.pill,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            formatMonthLabel(now),
+                                        border: Border.all(
+                                          color: const Color(0x38FFFFFF),
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.account_balance_wallet_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.x2),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(
+                                            data.accountName ??
+                                                'Expense Journal & Budget',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
-                                                .labelSmall
-                                                ?.copyWith(
-                                                  color: AppColors
-                                                      .onGradientSecondary,
-                                                  letterSpacing: 0,
-                                                ),
+                                                .titleMedium
+                                                ?.copyWith(color: Colors.white),
+                                          ),
+                                          Container(
+                                            margin: const EdgeInsets.only(
+                                              top: AppSpacing.x1,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: AppSpacing.x2,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0x1FFFFFFF),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AppRadius.pill,
+                                                  ),
+                                            ),
+                                            child: Text(
+                                              formatMonthLabel(now),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(
+                                                    color: AppColors
+                                                        .onGradientSecondary,
+                                                    letterSpacing: 0,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Notifications',
+                                      onPressed: () =>
+                                          context.push('/notifications'),
+                                      icon: const Icon(
+                                        Icons.notifications_none_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.x6),
+                                Text(
+                                  'MONTHLY BALANCE',
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppColors.onGradientSecondary,
+                                        letterSpacing: 1,
+                                      ),
+                                ),
+                                const SizedBox(height: AppSpacing.x1),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: AmountText(
+                                    minorUnits: remaining,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                    animate: data.isConnected,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.x1),
+                                Text(
+                                  data.isConnected
+                                      ? 'After this month’s expenses'
+                                      : 'Connect your sheet to load your balance',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.onGradientSecondary,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              AppSpacing.x2,
+                              padding,
+                              0,
+                            ),
+                            child: Transform.translate(
+                              offset: const Offset(0, -32),
+                              child: FloatingActionCard(
+                                actions: <QuickAction>[
+                                  QuickAction(
+                                    label: 'Expense',
+                                    icon: Icons.add_rounded,
+                                    onPressed: () =>
+                                        context.go('/add?type=expense'),
+                                  ),
+                                  QuickAction(
+                                    label: 'Income',
+                                    icon: Icons.south_west_rounded,
+                                    color: AppColors.income,
+                                    onPressed: () =>
+                                        context.go('/add?type=income'),
+                                  ),
+                                  QuickAction(
+                                    label: 'Journal',
+                                    icon: Icons.receipt_long_outlined,
+                                    color: AppColors.amber,
+                                    onPressed: () => context.go('/journal'),
+                                  ),
+                                  QuickAction(
+                                    label: 'More',
+                                    icon: Icons.more_horiz_rounded,
+                                    color: AppColors.labels,
+                                    onPressed: () => _showMore(context),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            padding,
+                            0,
+                            padding,
+                            AppSpacing.x4,
+                          ),
+                          sliver: SliverToBoxAdapter(
+                            child: ResponsiveGrid(
+                              compactColumns: 2,
+                              mediumColumns: 2,
+                              expandedColumns: 4,
+                              spacing: AppSpacing.x2,
+                              children: <Widget>[
+                                KpiCard(
+                                  label: 'Monthly salary',
+                                  value: formatMoney(salary),
+                                  detail: data.isConnected
+                                      ? 'Configured in Settings'
+                                      : 'Connect sheet to configure',
+                                  icon: Icons.account_balance_outlined,
+                                ),
+                                KpiCard(
+                                  label: 'Expenses',
+                                  value: formatMoney(expenses),
+                                  detail: '$expenseCount transactions',
+                                  icon: Icons.trending_down_rounded,
+                                  valueColor: AppColors.brandStart,
+                                ),
+                                KpiCard(
+                                  label: 'Income',
+                                  value: formatMoney(income),
+                                  detail: 'This month',
+                                  icon: Icons.trending_up_rounded,
+                                  valueColor: AppColors.income,
+                                ),
+                                KpiCard(
+                                  label: 'Savings rate',
+                                  value:
+                                      '${salary <= 0 ? 0 : ((remaining / salary) * 100).clamp(0, 100).round()}%',
+                                  detail: 'Based on monthly balance',
+                                  icon: Icons.savings_outlined,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (!data.isConnected)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              AppSpacing.x4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: SurfaceCard(
+                                child: Column(
+                                  children: <Widget>[
+                                    const EmptyState(
+                                      icon: Icons.cloud_off_outlined,
+                                      title: 'Connect your Google Sheet',
+                                      message:
+                                          'Your balance, summaries, charts and recent transactions will appear here after your spreadsheet is connected.',
+                                    ),
+                                    const SizedBox(height: AppSpacing.x3),
+                                    FilledButton.icon(
+                                      onPressed: () =>
+                                          context.push('/connect-spreadsheet'),
+                                      icon: const Icon(Icons.link_rounded),
+                                      label: const Text('Connect spreadsheet'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (data.isConnected) ...<Widget>[
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              AppSpacing.x4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: _MonthlyTrajectory(
+                                items: data.transactions,
+                                now: now,
+                              ),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              AppSpacing.x4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: _CategorySummary(
+                                categories: data.categories,
+                                totals: categoryTotals,
+                                total: expenses,
+                              ),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              AppSpacing.x4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: SurfaceCard(
+                                child: Column(
+                                  children: <Widget>[
+                                    SectionHeader(
+                                      title: 'Recent transactions',
+                                      subtitle: 'Latest entries in your sheet',
+                                      actionLabel: 'View all',
+                                      onAction: () => context.go('/journal'),
+                                    ),
+                                    const SizedBox(height: AppSpacing.x2),
+                                    if (recent.isEmpty)
+                                      const EmptyState(
+                                        icon: Icons.receipt_long_outlined,
+                                        title: 'No transactions yet',
+                                        message:
+                                            'Add your first expense or income to get started.',
+                                      )
+                                    else
+                                      for (final ExpenseTransaction item
+                                          in recent.take(5))
+                                        _TransactionTile(
+                                          item: item,
+                                          onTap: () => context.push(
+                                            '/transaction/${item.id}',
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Notifications',
-                                    onPressed: () =>
-                                        context.push('/notifications'),
-                                    icon: const Icon(
-                                      Icons.notifications_none_rounded,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.x6),
-                              Text(
-                                'MONTHLY BALANCE',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: AppColors.onGradientSecondary,
-                                      letterSpacing: 1,
-                                    ),
-                              ),
-                              const SizedBox(height: AppSpacing.x1),
-                              AmountText(
-                                minorUnits: remaining,
-                                style: Theme.of(context).textTheme.displaySmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                animate: data.isConnected,
-                              ),
-                              const SizedBox(height: AppSpacing.x1),
-                              Text(
-                                data.isConnected
-                                    ? 'After this month’s expenses'
-                                    : 'Connect your sheet to load your balance',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: AppColors.onGradientSecondary,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            AppSpacing.x3,
-                            padding,
-                            0,
-                          ),
-                          child: Transform.translate(
-                            offset: const Offset(0, -36),
-                            child: FloatingActionCard(
-                              actions: <QuickAction>[
-                                QuickAction(
-                                  label: 'Expense',
-                                  icon: Icons.add_rounded,
-                                  onPressed: () =>
-                                      context.go('/add?type=expense'),
+                                  ],
                                 ),
-                                QuickAction(
-                                  label: 'Income',
-                                  icon: Icons.south_west_rounded,
-                                  color: AppColors.income,
-                                  onPressed: () =>
-                                      context.go('/add?type=income'),
-                                ),
-                                QuickAction(
-                                  label: 'Journal',
-                                  icon: Icons.receipt_long_outlined,
-                                  color: AppColors.amber,
-                                  onPressed: () => context.go('/journal'),
-                                ),
-                                QuickAction(
-                                  label: 'More',
-                                  icon: Icons.more_horiz_rounded,
-                                  color: AppColors.labels,
-                                  onPressed: () => _showMore(context),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                          padding,
-                          0,
-                          padding,
-                          AppSpacing.x4,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: ResponsiveGrid(
-                            children: <Widget>[
-                              KpiCard(
-                                label: 'Monthly salary',
-                                value: formatMoney(salary),
-                                detail: data.isConnected
-                                    ? 'Configured in Settings'
-                                    : 'Connect sheet to configure',
-                                icon: Icons.account_balance_outlined,
-                              ),
-                              KpiCard(
-                                label: 'Expenses',
-                                value: formatMoney(expenses),
-                                detail: '$expenseCount transactions',
-                                icon: Icons.trending_down_rounded,
-                                valueColor: AppColors.brandStart,
-                              ),
-                              KpiCard(
-                                label: 'Income',
-                                value: formatMoney(income),
-                                detail: 'This month',
-                                icon: Icons.trending_up_rounded,
-                                valueColor: AppColors.income,
-                              ),
-                              KpiCard(
-                                label: 'Savings rate',
-                                value:
-                                    '${salary <= 0 ? 0 : ((remaining / salary) * 100).clamp(0, 100).round()}%',
-                                detail: 'Based on monthly balance',
-                                icon: Icons.savings_outlined,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (!data.isConnected)
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            AppSpacing.x4,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: SurfaceCard(
-                              child: Column(
-                                children: <Widget>[
-                                  const EmptyState(
-                                    icon: Icons.cloud_off_outlined,
-                                    title: 'Connect your Google Sheet',
-                                    message: 'Your balance, summaries, charts and recent transactions will appear here after your spreadsheet is connected.',
-                                  ),
-                                  const SizedBox(height: AppSpacing.x3),
-                                  FilledButton.icon(
-                                    onPressed: () =>
-                                        context.push('/connect-spreadsheet'),
-                                    icon: const Icon(Icons.link_rounded),
-                                    label: const Text('Connect spreadsheet'),
+                        ],
+                        if (data.error != null)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              AppSpacing.x4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: MaterialBanner(
+                                content: Text(data.error!),
+                                leading: const Icon(Icons.sync_problem_rounded),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () => ref
+                                        .read(expenseDataProvider.notifier)
+                                        .refresh(),
+                                    child: const Text('Retry'),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        ),
-                      if (data.isConnected) ...<Widget>[
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            AppSpacing.x4,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: _MonthlyTrajectory(
-                              items: data.transactions,
-                              now: now,
-                            ),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            AppSpacing.x4,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: _CategorySummary(
-                              categories: data.categories,
-                              totals: categoryTotals,
-                              total: expenses,
-                            ),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            AppSpacing.x4,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: SurfaceCard(
-                              child: Column(
-                                children: <Widget>[
-                                  SectionHeader(
-                                    title: 'Recent transactions',
-                                    subtitle: 'Latest entries in your sheet',
-                                    actionLabel: 'View all',
-                                    onAction: () => context.go('/journal'),
-                                  ),
-                                  const SizedBox(height: AppSpacing.x2),
-                                  if (recent.isEmpty)
-                                    const EmptyState(
-                                      icon: Icons.receipt_long_outlined,
-                                      title: 'No transactions yet',
-                                      message: 'Add your first expense or income to get started.',
-                                    )
-                                  else
-                                    for (final ExpenseTransaction item
-                                        in recent.take(5))
-                                      _TransactionTile(
-                                        item: item,
-                                        onTap: () => context.push(
-                                          '/transaction/${item.id}',
-                                        ),
-                                      ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
-                      if (data.error != null)
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            AppSpacing.x4,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: MaterialBanner(
-                              content: Text(data.error!),
-                              leading: const Icon(Icons.sync_problem_rounded),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () => ref
-                                      .read(expenseDataProvider.notifier)
-                                      .refresh(),
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -652,31 +675,62 @@ class _CategorySummary extends StatelessWidget {
             for (final ExpenseCategory category in used.take(5))
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.x3),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Container(
-                      width: 9,
-                      height: 9,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accentOrange,
-                        shape: BoxShape.circle,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        Container(
+                          width: 9,
+                          height: 9,
+                          decoration: const BoxDecoration(
+                            color: AppColors.accentOrange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.x2),
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Text(
+                          formatMoney(totals[category.id] ?? 0),
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        const SizedBox(width: AppSpacing.x2),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 38),
+                          child: Text(
+                            '${total == 0 ? 0 : ((totals[category.id] ?? 0) * 100 / total).round()}%',
+                            textAlign: TextAlign.end,
+                            maxLines: 1,
+                            overflow: TextOverflow.fade,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.x2),
-                    Expanded(child: Text(category.name)),
-                    Text(
-                      formatMoney(totals[category.id] ?? 0),
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(width: AppSpacing.x2),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 38),
-                      child: Text(
-                        '${total == 0 ? 0 : ((totals[category.id] ?? 0) * 100 / total).round()}%',
-                        textAlign: TextAlign.end,
-                        maxLines: 1,
-                        overflow: TextOverflow.fade,
-                        style: Theme.of(context).textTheme.labelSmall,
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: total == 0
+                            ? 0.0
+                            : ((totals[category.id] ?? 0) / total).clamp(
+                                0.0,
+                                1.0,
+                              ),
+                        minHeight: 4,
+                        backgroundColor: AppColors.divider,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppColors.accentOrange,
+                        ),
                       ),
                     ),
                   ],
@@ -694,41 +748,74 @@ class _TransactionTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    onTap: onTap,
-    leading: CircleAvatar(
-      backgroundColor: item.type == TransactionType.income
-          ? AppColors.incomeSurface
-          : AppColors.orangePillSurface,
-      child: Icon(
-        item.type == TransactionType.income
-            ? Icons.south_west_rounded
-            : Icons.north_east_rounded,
-        color: item.type == TransactionType.income
-            ? AppColors.income
-            : AppColors.brandStart,
-        size: 18,
-      ),
-    ),
-    title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-    subtitle: Text('${item.categoryName} · ${formatDate(item.occurredAt)}'),
-    trailing: ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: context.responsiveValue(compact: 104, medium: 144),
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
-        child: Text(
-          '${item.type == TransactionType.income ? '+' : '−'}${formatMoney(item.amountMinor)}',
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: item.type == TransactionType.income
-                ? AppColors.income
-                : AppColors.brandStart,
-          ),
+  Widget build(BuildContext context) {
+    final bool isIncome = item.type == TransactionType.income;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.tile),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.x2,
+          horizontal: AppSpacing.x1,
+        ),
+        child: Row(
+          children: <Widget>[
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: isIncome
+                  ? AppColors.incomeSurface
+                  : AppColors.orangePillSurface,
+              child: Icon(
+                isIncome ? Icons.south_west_rounded : Icons.north_east_rounded,
+                color: isIncome ? AppColors.income : AppColors.brandStart,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${item.categoryName} · ${formatDate(item.occurredAt)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x2),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: context.responsiveValue(compact: 110, medium: 144),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${isIncome ? '+' : '−'}${formatMoney(item.amountMinor)}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: isIncome ? AppColors.income : AppColors.brandStart,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
