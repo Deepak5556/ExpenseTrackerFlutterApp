@@ -80,6 +80,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
         )
         .length;
 
+    final bool isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
       appBar: AppBar(
@@ -94,8 +97,17 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           ),
         ],
       ),
-      body: ResponsiveListView(
-        children: <Widget>[
+      body: RefreshIndicator(
+        color: AppColors.brandStart,
+        backgroundColor: AppColors.card,
+        onRefresh: () async {
+          if (data.isConnected) {
+            await ref.read(expenseDataProvider.notifier).refresh();
+          }
+        },
+        child: ResponsiveListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: <Widget>[
           if (!data.isConnected)
             SurfaceCard(
               child: EmptyState(
@@ -178,11 +190,13 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.x3),
                   SizedBox(
-                    height: context.responsiveValue(
-                      compact: 205,
-                      medium: 230,
-                      expanded: 260,
-                    ),
+                    height: isLandscape
+                        ? 160
+                        : context.responsiveValue(
+                            compact: 205,
+                            medium: 230,
+                            expanded: 260,
+                          ),
                     child: _IncomeExpenseChart(
                       items: data.transactions,
                       months: _months,
@@ -227,11 +241,13 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                     )
                   else ...<Widget>[
                     SizedBox(
-                      height: context.responsiveValue(
-                        compact: 175,
-                        medium: 195,
-                        expanded: 220,
-                      ),
+                      height: isLandscape
+                          ? 150
+                          : context.responsiveValue(
+                              compact: 175,
+                              medium: 195,
+                              expanded: 220,
+                            ),
                       child: PieChart(
                         PieChartData(
                           centerSpaceRadius: 42,
@@ -277,8 +293,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           ],
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _IncomeExpenseChart extends StatelessWidget {

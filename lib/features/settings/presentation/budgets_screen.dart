@@ -81,10 +81,13 @@ class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
                     icon: const Icon(Icons.chevron_left_rounded),
                   ),
                   Expanded(
-                    child: Text(
-                      formatMonthLabel(_month),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        formatMonthLabel(_month),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                     ),
                   ),
                   IconButton(

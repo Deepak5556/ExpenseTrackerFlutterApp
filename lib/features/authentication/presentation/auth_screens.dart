@@ -140,43 +140,47 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       context.windowSizeClass.pagePadding,
                       20,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          width: double.infinity,
-                          constraints: const BoxConstraints(maxWidth: 390),
-                          height: context.responsiveValue(
-                            compact: 250,
-                            medium: 280,
-                            expanded: 310,
-                          ),
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: AppShadows.card,
-                          ),
-                          child: _OnboardingIllustration(index: index),
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          _slides[index].$1,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Container(
+                              width: double.infinity,
+                              constraints: const BoxConstraints(maxWidth: 390),
+                              height: context.responsiveValue(
+                                compact: 220,
+                                medium: 260,
+                                expanded: 300,
                               ),
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: AppShadows.card,
+                              ),
+                              child: _OnboardingIllustration(index: index),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              _slides[index].$1,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _slides[index].$2,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: AppColors.onGradientSecondary),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _slides[index].$2,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: AppColors.onGradientSecondary),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -370,164 +374,275 @@ class LoginScreen extends ConsumerWidget {
       _ => null,
     };
     final bool isAuthorization = state is AuthNeedsAuthorization;
+
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            flex: 5,
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: AppColors.brandGradient,
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const WalletMark(size: 70),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Expense Journal & Budget',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
+      body: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool isLandscape = constraints.maxWidth > constraints.maxHeight;
+          if (isLandscape) {
+            return Row(
+              children: <Widget>[
+                Expanded(
+                  flex: 5,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.brandGradient,
+                    ),
+                    child: SafeArea(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const WalletMark(size: 60),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Expense Journal & Budget',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'A clearer view of every rupee.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color: AppColors.onGradientSecondary,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'A clearer view of every rupee.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: AppColors.onGradientSecondary),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-              decoration: const BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        isAuthorization
-                            ? 'Connect your Google Drive'
-                            : 'Welcome',
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        isAuthorization
-                            ? 'Allow access to files you choose to create or open in this app.'
-                            : 'Sign in to keep your journal in your Google Sheet.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(height: 20),
-                      if (failure != null) ...<Widget>[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF2EF),
-                            borderRadius: BorderRadius.circular(14),
+                Expanded(
+                  flex: 5,
+                  child: Container(
+                    color: AppColors.card,
+                    child: SafeArea(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 20,
                           ),
-                          child: Text(
-                            failure.message,
-                            style: const TextStyle(color: AppColors.brandStart),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: OutlinedButton(
-                          onPressed: state.isBusy
-                              ? null
-                              : () => isAuthorization
-                                    ? controller.authorizeAndContinue()
-                                    : controller.signIn(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(color: AppColors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: _LoginForm(
+                              isAuthorization: isAuthorization,
+                              failure: failure,
+                              state: state,
+                              controller: controller,
                             ),
                           ),
-                          child: state.isBusy
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      state is AuthBusy
-                                          ? state.step
-                                          : 'Please wait…',
-                                    ),
-                                  ],
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    const GoogleMark(),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      failure == null
-                                          ? (isAuthorization
-                                                ? 'Continue with Google'
-                                                : 'Continue with Google')
-                                          : 'Retry with Google',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'Your spreadsheet stays in your Google Drive. We only request access when needed.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.labels, fontSize: 12),
-                      ),
-                    ],
+                    ),
                   ),
+                ),
+              ],
+            );
+          }
+
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 5,
+                      child: DecoratedBox(
+                        decoration: const BoxDecoration(
+                          gradient: AppColors.brandGradient,
+                        ),
+                        child: SafeArea(
+                          bottom: false,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  const WalletMark(size: 70),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'Expense Journal & Budget',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'A clearer view of every rupee.',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.copyWith(
+                                          color: AppColors.onGradientSecondary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                        decoration: const BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(30),
+                          ),
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: _LoginForm(
+                              isAuthorization: isAuthorization,
+                              failure: failure,
+                              state: state,
+                              controller: controller,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
+          );
+        },
       ),
+    );
+  }
+}
+
+class _LoginForm extends StatelessWidget {
+  const _LoginForm({
+    required this.isAuthorization,
+    required this.failure,
+    required this.state,
+    required this.controller,
+  });
+
+  final bool isAuthorization;
+  final AuthFailure? failure;
+  final AuthState state;
+  final AuthController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          isAuthorization ? 'Connect your Google Drive' : 'Welcome',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          isAuthorization
+              ? 'Allow access to files you choose to create or open in this app.'
+              : 'Sign in to keep your journal in your Google Sheet.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (failure != null) ...<Widget>[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF2EF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              failure!.message,
+              style: const TextStyle(color: AppColors.brandStart),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: OutlinedButton(
+            onPressed: state.isBusy
+                ? null
+                : () => isAuthorization
+                      ? controller.authorizeAndContinue()
+                      : controller.signIn(),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: state.isBusy
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        state is AuthBusy
+                            ? (state as AuthBusy).step
+                            : 'Please wait…',
+                      ),
+                    ],
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      GoogleMark(),
+                      SizedBox(width: 12),
+                      Text(
+                        'Continue with Google',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Text(
+          'Your spreadsheet stays in your Google Drive. We only request access when needed.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.labels, fontSize: 12),
+        ),
+      ],
     );
   }
 }

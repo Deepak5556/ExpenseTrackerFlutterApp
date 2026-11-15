@@ -74,9 +74,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
       appBar: AppBar(title: const Text('Add transaction')),
-      body: Form(
-        key: _formKey,
-        child: ResponsiveListView(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Form(
+          key: _formKey,
+          child: ResponsiveListView(
           children: <Widget>[
             SegmentedButton<TransactionType>(
               segments: const <ButtonSegment<TransactionType>>[
@@ -179,11 +182,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.x3),
-                  OutlinedButton.icon(
-                    onPressed: _pickDateTime,
-                    icon: const Icon(Icons.calendar_month_rounded),
-                    label: Text(
-                      '${formatDate(_occurredAt)} · ${formatTime24h(_occurredAt)}',
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _pickDateTime,
+                      icon: const Icon(Icons.calendar_month_rounded),
+                      label: Text(
+                        '${formatDate(_occurredAt)} · ${formatTime24h(_occurredAt)}',
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.x3),
@@ -265,7 +271,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _pickDateTime() async {

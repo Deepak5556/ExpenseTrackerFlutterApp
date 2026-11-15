@@ -101,9 +101,12 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
       appBar: AppBar(title: const Text('Edit transaction')),
-      body: Form(
-        key: _formKey,
-        child: ResponsiveListView(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Form(
+          key: _formKey,
+          child: ResponsiveListView(
           children: <Widget>[
             SurfaceCard(
               child: Column(
@@ -168,11 +171,14 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
                         value == null ? 'Choose a category.' : null,
                   ),
                   const SizedBox(height: AppSpacing.x3),
-                  OutlinedButton.icon(
-                    onPressed: _pickDateTime,
-                    icon: const Icon(Icons.calendar_month_outlined),
-                    label: Text(
-                      '${formatDate(_occurredAt)} · ${formatTime24h(_occurredAt)}',
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _pickDateTime,
+                      icon: const Icon(Icons.calendar_month_outlined),
+                      label: Text(
+                        '${formatDate(_occurredAt)} · ${formatTime24h(_occurredAt)}',
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.x3),
@@ -221,7 +227,8 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _pickDateTime() async {

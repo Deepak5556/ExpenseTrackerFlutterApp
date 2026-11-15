@@ -120,17 +120,20 @@ class _TransactionDetailScreenState
                             ?.copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.x2),
-                      AmountText(
-                        minorUnits: item.type == TransactionType.income
-                            ? item.amountMinor
-                            : -item.amountMinor,
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(
-                              color: item.type == TransactionType.income
-                                  ? AppColors.income
-                                  : AppColors.brandStart,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: AmountText(
+                          minorUnits: item.type == TransactionType.income
+                              ? item.amountMinor
+                              : -item.amountMinor,
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                color: item.type == TransactionType.income
+                                    ? AppColors.income
+                                    : AppColors.brandStart,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
                       ),
                     ],
                   ),

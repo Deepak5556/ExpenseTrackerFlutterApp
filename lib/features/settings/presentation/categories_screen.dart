@@ -268,9 +268,11 @@ class _CategoryTile extends StatelessWidget {
         color: AppColors.brandStart,
       ),
     ),
-    title: Text(category.name),
+    title: Text(category.name, maxLines: 1, overflow: TextOverflow.ellipsis),
     subtitle: Text(
       '$usage transactions${category.monthlyBudgetMinor > 0 ? ' · ${formatMoney(category.monthlyBudgetMinor)} budget' : ''}',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     ),
     trailing: Wrap(
       spacing: 0,
