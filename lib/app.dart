@@ -26,11 +26,36 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((Ref ref) {
   return router;
 });
 
-class ExpenseJournalApp extends ConsumerWidget {
+class ExpenseJournalApp extends ConsumerStatefulWidget {
   const ExpenseJournalApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExpenseJournalApp> createState() => _ExpenseJournalAppState();
+}
+
+class _ExpenseJournalAppState extends ConsumerState<ExpenseJournalApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(authControllerProvider.notifier).handleAppResumed();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Expense Journal & Budget',
       debugShowCheckedModeBanner: false,

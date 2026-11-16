@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/errors/auth_failure.dart';
+import '../../core/storage/cache_manager.dart';
 import '../../services/google_auth_service.dart';
 import 'auth_state.dart';
 
@@ -16,12 +16,14 @@ final NotifierProvider<AuthController, AuthState> authControllerProvider =
 
 class AuthController extends Notifier<AuthState> {
   late final GoogleAuthService _service;
+  late final CacheManager _cacheManager;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _subscription;
   bool _onboarding = false;
 
   @override
   AuthState build() {
     _service = ref.read(googleAuthServiceProvider);
+    _cacheManager = ref.read(cacheManagerProvider);
     ref.onDispose(() => _subscription?.cancel());
     unawaited(_restore());
     return const AuthRestoring();
@@ -29,14 +31,15 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> _restore() async {
     try {
-      final SharedPreferences preferences =
-          await SharedPreferences.getInstance();
-      _onboarding = !(preferences.getBool('onboarding_complete') ?? false);
+      _onboarding = !_cacheManager.onboardingComplete;
       await _service.initialize();
       _subscription = _service.authenticationEvents.listen(
         (GoogleSignInAuthenticationEvent event) {
-          if (event case GoogleSignInAuthenticationEventSignOut()) {
-            state = AuthSignedOut(onboarding: _onboarding);
+          switch (event) {
+            case GoogleSignInAuthenticationEventSignIn(:final user):
+              unawaited(_handleAccountChanged(user));
+            case GoogleSignInAuthenticationEventSignOut():
+              state = AuthSignedOut(onboarding: _onboarding);
           }
         },
         onError: (Object _) {
@@ -69,6 +72,74 @@ class AuthController extends Notifier<AuthState> {
         failure: const AuthUnknownFailure(),
         onboarding: _onboarding,
       );
+    }
+  }
+
+  Future<void> _handleAccountChanged(GoogleSignInAccount user) async {
+    final AuthState current = state;
+    if (current is AuthSignedIn && current.user.id == user.id) {
+      return;
+    }
+    try {
+      final authorization = await _service.authorizationForScopes();
+      if (authorization == null) {
+        state = AuthNeedsAuthorization(user, onboarding: _onboarding);
+        return;
+      }
+      final String result = await _service.verifyDriveAccess();
+      state = AuthSignedIn(
+        user: user,
+        grantedScopes: googleDriveFileScopes,
+        tokenTestResult: result,
+      );
+    } catch (error) {
+      state = AuthReconnectRequired(
+        user,
+        error is AuthFailure ? error : const AuthUnknownFailure(),
+      );
+    }
+  }
+
+  /// Validates session status when the application returns to foreground.
+  Future<void> handleAppResumed() async {
+    if (state is! AuthSignedIn && state is! AuthReconnectRequired) return;
+
+    try {
+      final authorization = await _service.authorizationForScopes();
+      if (authorization == null) {
+        final GoogleSignInAccount? user = _service.account;
+        if (user != null) {
+          state = AuthNeedsAuthorization(
+            user,
+            failure: const AuthPermissionRevoked(),
+            onboarding: _onboarding,
+          );
+        } else {
+          state = AuthSignedOut(onboarding: _onboarding);
+        }
+        return;
+      }
+
+      if (state is AuthReconnectRequired) {
+        final GoogleSignInAccount? user = _service.account;
+        if (user != null) {
+          final String result = await _service.verifyDriveAccess();
+          state = AuthSignedIn(
+            user: user,
+            grantedScopes: googleDriveFileScopes,
+            tokenTestResult: result,
+          );
+        }
+      }
+    } on AuthFailure catch (failure) {
+      final GoogleSignInAccount? user = _service.account;
+      if (user != null) {
+        state = AuthReconnectRequired(user, failure);
+      } else {
+        state = AuthSignedOut(failure: failure, onboarding: _onboarding);
+      }
+    } catch (_) {
+      // Retain current session on transient network blips.
     }
   }
 
@@ -182,12 +253,12 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> disconnect() async {
     await _service.disconnect();
+    await _cacheManager.clearConnection();
     state = const AuthSignedOut();
   }
 
   Future<void> completeOnboarding() async {
-    final SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setBool('onboarding_complete', true);
+    await _cacheManager.setOnboardingComplete(true);
     _onboarding = false;
     final AuthState current = state;
     if (current is AuthSignedOut) {
