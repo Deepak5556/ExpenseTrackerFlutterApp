@@ -9,6 +9,7 @@ import '../../repositories/category_repository.dart';
 import '../../repositories/settings_repository.dart';
 import '../../repositories/expense_repository_v4.dart';
 import '../../services/google_sheets_service.dart';
+import '../../core/storage/cache_manager.dart';
 
 final Provider<GoogleAuthService> googleAuthServiceProvider =
     Provider<GoogleAuthService>((Ref ref) => GoogleAuthService());
@@ -67,6 +68,8 @@ class ExpenseDataState {
     this.categories = const <ExpenseCategory>[],
     this.settings = const <String, String>{},
     this.budgets = const <String, int>{},
+    this.lastSyncTime,
+    this.cachedCurrency,
     this.error,
   });
 
@@ -80,11 +83,13 @@ class ExpenseDataState {
   final List<ExpenseCategory> categories;
   final Map<String, String> settings;
   final Map<String, int> budgets;
+  final DateTime? lastSyncTime;
+  final String? cachedCurrency;
   final String? error;
 
   bool get isConnected => spreadsheetId != null;
   int get salaryMinor => int.tryParse(settings['salaryMinor'] ?? '') ?? 0;
-  String get currency => settings['currency'] ?? 'INR';
+  String get currency => settings['currency'] ?? cachedCurrency ?? 'INR';
 
   ExpenseDataState copyWith({
     bool? initialized,
@@ -98,9 +103,12 @@ class ExpenseDataState {
     List<ExpenseCategory>? categories,
     Map<String, String>? settings,
     Map<String, int>? budgets,
+    DateTime? lastSyncTime,
+    String? cachedCurrency,
     String? error,
     bool clearError = false,
     bool clearAccount = false,
+    bool clearLastSync = false,
   }) => ExpenseDataState(
     initialized: initialized ?? this.initialized,
     loading: loading ?? this.loading,
@@ -114,18 +122,27 @@ class ExpenseDataState {
     categories: categories ?? this.categories,
     settings: settings ?? this.settings,
     budgets: budgets ?? this.budgets,
+    lastSyncTime: clearLastSync ? null : lastSyncTime ?? this.lastSyncTime,
+    cachedCurrency: cachedCurrency ?? this.cachedCurrency,
     error: clearError ? null : error ?? this.error,
   );
 }
 
 class ExpenseDataController extends Notifier<ExpenseDataState> {
   late final ExpenseRepository _repository;
+  late final CacheManager _cacheManager;
   bool _initializationStarted = false;
+  bool _isRefreshing = false;
 
   @override
   ExpenseDataState build() {
     _repository = ref.watch(expenseRepositoryProvider);
-    return const ExpenseDataState();
+    _cacheManager = ref.watch(cacheManagerProvider);
+    return ExpenseDataState(
+      spreadsheetId: _cacheManager.spreadsheetId,
+      cachedCurrency: _cacheManager.selectedCurrency,
+      lastSyncTime: _cacheManager.lastSyncTime,
+    );
   }
 
   Future<void> initialize() async {
@@ -133,8 +150,17 @@ class ExpenseDataController extends Notifier<ExpenseDataState> {
     _initializationStarted = true;
     state = state.copyWith(loading: true, clearError: true);
     try {
-      final String? id = await _repository.loadConnectionId();
-      state = state.copyWith(spreadsheetId: id, initialized: true);
+      final String? id =
+          _cacheManager.spreadsheetId ?? await _repository.loadConnectionId();
+      if (id != null && _cacheManager.spreadsheetId != id) {
+        await _cacheManager.setSpreadsheetId(id);
+      }
+      state = state.copyWith(
+        spreadsheetId: id,
+        cachedCurrency: _cacheManager.selectedCurrency,
+        lastSyncTime: _cacheManager.lastSyncTime,
+        initialized: true,
+      );
       if (id != null) await _repositoryAuthRefresh();
     } catch (error) {
       state = state.copyWith(initialized: true, error: _message(error));
@@ -163,6 +189,7 @@ class ExpenseDataController extends Notifier<ExpenseDataState> {
   Future<void> connectNewWorkbook() async {
     await _runSaving(() async {
       final String id = await _repository.createWorkbook();
+      await _cacheManager.setSpreadsheetId(id);
       final account = _repository.account;
       state = state.copyWith(
         spreadsheetId: id,
@@ -177,9 +204,11 @@ class ExpenseDataController extends Notifier<ExpenseDataState> {
   Future<void> connectExistingWorkbook(String value) async {
     await _runSaving(() async {
       await _repository.connectExisting(value);
+      final String? id = _repository.spreadsheetId;
+      await _cacheManager.setSpreadsheetId(id);
       final account = _repository.account;
       state = state.copyWith(
-        spreadsheetId: _repository.spreadsheetId,
+        spreadsheetId: id,
         accountName: account?.displayName,
         accountEmail: account?.email,
         clearError: true,
@@ -189,24 +218,38 @@ class ExpenseDataController extends Notifier<ExpenseDataState> {
   }
 
   Future<void> refresh() async {
+    if (_isRefreshing) return;
     if (_repository.spreadsheetId == null && state.spreadsheetId != null) {
       await _repository.loadConnectionId();
     }
     if (_repository.spreadsheetId == null) return;
+    _isRefreshing = true;
     state = state.copyWith(loading: true, clearError: true);
     try {
       final ExpenseSnapshot snapshot = await _repository.loadSnapshot();
+      final String? currencyFromSheet = snapshot.settings['currency'];
+      if (currencyFromSheet != null && currencyFromSheet.isNotEmpty) {
+        await _cacheManager.setSelectedCurrency(currencyFromSheet);
+      }
+      final DateTime now = DateTime.now();
+      await _cacheManager.setLastSyncTime(now);
+
       state = state.copyWith(
         transactions: snapshot.transactions,
         categories: snapshot.categories,
         settings: snapshot.settings,
         budgets: snapshot.budgets,
+        cachedCurrency: currencyFromSheet ?? _cacheManager.selectedCurrency,
+        lastSyncTime: now,
         loading: false,
         clearError: true,
       );
     } catch (error) {
+      // Retain existing in-memory data on network failure; update error message.
       state = state.copyWith(loading: false, error: _message(error));
       rethrow;
+    } finally {
+      _isRefreshing = false;
     }
   }
 
@@ -320,6 +363,7 @@ class ExpenseDataController extends Notifier<ExpenseDataState> {
     state = state.copyWith(loading: true, clearError: true);
     try {
       await _repository.disconnect();
+      await _cacheManager.clearConnection();
       await ref.read(googleAuthServiceProvider).signOut();
       state = const ExpenseDataState(initialized: true);
     } catch (error) {
