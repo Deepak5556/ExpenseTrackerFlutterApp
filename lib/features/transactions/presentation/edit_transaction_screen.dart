@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/utils/app_feedback.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/widgets/design_system_widgets.dart';
 import '../../../core/widgets/responsive_layout.dart';
@@ -276,9 +277,17 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
               notes: _notesController.text.trim(),
             ),
           );
-      if (mounted) context.pop();
+      if (mounted) {
+        AppFeedback.showSuccess(context, 'Transaction updated in Google Sheets');
+        context.pop();
+      }
     } catch (_) {
-      // The fields remain in place so a failed write can be retried.
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'Could not update transaction. Check connection and retry.',
+        );
+      }
     }
   }
 

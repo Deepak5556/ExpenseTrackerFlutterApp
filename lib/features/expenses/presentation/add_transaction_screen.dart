@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/utils/app_feedback.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/widgets/design_system_widgets.dart';
 import '../../../core/widgets/responsive_layout.dart';
@@ -320,16 +321,18 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             notes: _notesController.text,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${_type.name == 'expense' ? 'Expense' : 'Income'} saved to Google Sheets',
-          ),
-        ),
+      AppFeedback.showSuccess(
+        context,
+        '${_type.name == 'expense' ? 'Expense' : 'Income'} saved to Google Sheets',
       );
       context.go('/journal');
     } catch (_) {
-      // The controller exposes the sync error; keep all fields for retry.
+      if (mounted) {
+        AppFeedback.showError(
+          context,
+          'Could not save to Google Sheets. Check your connection.',
+        );
+      }
     }
   }
 

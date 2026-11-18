@@ -10,7 +10,9 @@ import '../../../core/utils/date_formatters.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/window_size_class.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/offline_banner.dart';
 import '../../../core/widgets/responsive_layout.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -108,16 +110,24 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
         child: ResponsiveListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: <Widget>[
+          if (data.error != null)
+            OfflineBanner(
+              message: data.error!,
+              onRetry: () => ref.read(expenseDataProvider.notifier).refresh(),
+            ),
           if (!data.isConnected)
             SurfaceCard(
               child: EmptyState(
                 icon: Icons.insights_rounded,
                 title: 'Connect your spreadsheet to see analytics',
-                message: 'Income, expenses, savings, category insights and trend charts are calculated from your Google Sheet.',
+                message:
+                    'Income, expenses, savings, category insights and trend charts are calculated from your Google Sheet.',
                 actionLabel: 'Connect spreadsheet',
                 onAction: () => context.push('/connect-spreadsheet'),
               ),
             )
+          else if (data.loading && data.transactions.isEmpty)
+            const DashboardSkeleton()
           else ...<Widget>[
             SurfaceCard(
               child: Column(

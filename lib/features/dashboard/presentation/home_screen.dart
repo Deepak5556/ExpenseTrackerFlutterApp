@@ -10,8 +10,10 @@ import '../../../core/utils/date_formatters.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/window_size_class.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/offline_banner.dart';
 import '../../../core/widgets/responsive_builder.dart';
 import '../../../core/widgets/responsive_layout.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -266,53 +268,75 @@ class HomeScreen extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            padding,
-                            0,
-                            padding,
-                            AppSpacing.x4,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: ResponsiveGrid(
-                              compactColumns: 2,
-                              mediumColumns: 2,
-                              expandedColumns: 4,
-                              spacing: AppSpacing.x2,
-                              children: <Widget>[
-                                KpiCard(
-                                  label: 'Monthly salary',
-                                  value: formatMoney(salary),
-                                  detail: data.isConnected
-                                      ? 'Configured in Settings'
-                                      : 'Connect sheet to configure',
-                                  icon: Icons.account_balance_outlined,
-                                ),
-                                KpiCard(
-                                  label: 'Expenses',
-                                  value: formatMoney(expenses),
-                                  detail: '$expenseCount transactions',
-                                  icon: Icons.trending_down_rounded,
-                                  valueColor: AppColors.brandStart,
-                                ),
-                                KpiCard(
-                                  label: 'Income',
-                                  value: formatMoney(income),
-                                  detail: 'This month',
-                                  icon: Icons.trending_up_rounded,
-                                  valueColor: AppColors.income,
-                                ),
-                                KpiCard(
-                                  label: 'Savings rate',
-                                  value:
-                                      '${salary <= 0 ? 0 : ((remaining / salary) * 100).clamp(0, 100).round()}%',
-                                  detail: 'Based on monthly balance',
-                                  icon: Icons.savings_outlined,
-                                ),
-                              ],
+                        if (data.error != null)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                padding,
+                                0,
+                                padding,
+                                AppSpacing.x3,
+                              ),
+                              child: OfflineBanner(
+                                message: data.error!,
+                                onRetry: () => ref
+                                    .read(expenseDataProvider.notifier)
+                                    .refresh(),
+                              ),
                             ),
                           ),
-                        ),
+                        if (data.loading &&
+                            data.transactions.isEmpty &&
+                            data.isConnected)
+                          const SliverToBoxAdapter(child: DashboardSkeleton())
+                        else ...<Widget>[
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              padding,
+                              0,
+                              padding,
+                              AppSpacing.x4,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: ResponsiveGrid(
+                                compactColumns: 2,
+                                mediumColumns: 2,
+                                expandedColumns: 4,
+                                spacing: AppSpacing.x2,
+                                children: <Widget>[
+                                  KpiCard(
+                                    label: 'Monthly salary',
+                                    value: formatMoney(salary),
+                                    detail: data.isConnected
+                                        ? 'Configured in Settings'
+                                        : 'Connect sheet to configure',
+                                    icon: Icons.account_balance_outlined,
+                                  ),
+                                  KpiCard(
+                                    label: 'Expenses',
+                                    value: formatMoney(expenses),
+                                    detail: '$expenseCount transactions',
+                                    icon: Icons.trending_down_rounded,
+                                    valueColor: AppColors.brandStart,
+                                  ),
+                                  KpiCard(
+                                    label: 'Income',
+                                    value: formatMoney(income),
+                                    detail: 'This month',
+                                    icon: Icons.trending_up_rounded,
+                                    valueColor: AppColors.income,
+                                  ),
+                                  KpiCard(
+                                    label: 'Savings rate',
+                                    value:
+                                        '${salary <= 0 ? 0 : ((remaining / salary) * 100).clamp(0, 100).round()}%',
+                                    detail: 'Based on monthly balance',
+                                    icon: Icons.savings_outlined,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         if (!data.isConnected)
                           SliverPadding(
                             padding: EdgeInsets.fromLTRB(
@@ -413,29 +437,7 @@ class HomeScreen extends ConsumerWidget {
                             ),
                           ),
                         ],
-                        if (data.error != null)
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(
-                              padding,
-                              0,
-                              padding,
-                              AppSpacing.x4,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: MaterialBanner(
-                                content: Text(data.error!),
-                                leading: const Icon(Icons.sync_problem_rounded),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () => ref
-                                        .read(expenseDataProvider.notifier)
-                                        .refresh(),
-                                    child: const Text('Retry'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        ],
                       ],
                     ),
                   ),

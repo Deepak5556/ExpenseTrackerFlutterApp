@@ -8,7 +8,9 @@ import '../../../core/utils/date_formatters.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/window_size_class.dart';
 import '../../../core/widgets/design_system_widgets.dart';
+import '../../../core/widgets/offline_banner.dart';
 import '../../../core/widgets/responsive_layout.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../../features/data/expense_data_provider.dart';
 import '../../../models/expense_category.dart';
 import '../../../models/expense_transaction.dart';
@@ -231,6 +233,15 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.x3),
+            if (data.error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+                child: OfflineBanner(
+                  message: data.error!,
+                  onRetry: () =>
+                      ref.read(expenseDataProvider.notifier).refresh(),
+                ),
+              ),
             if (data.isConnected)
               Row(
                 children: <Widget>[
@@ -264,12 +275,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 ),
               )
             else if (data.loading && data.transactions.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.x8),
-                  child: CircularProgressIndicator(),
-                ),
-              )
+              const TransactionListSkeleton()
             else if (items.isEmpty)
               SurfaceCard(
                 child: EmptyState(

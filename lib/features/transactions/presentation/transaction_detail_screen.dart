@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/utils/app_feedback.dart';
 import '../../../core/utils/date_formatters.dart';
 import '../../../core/widgets/design_system_widgets.dart';
 import '../../../core/widgets/responsive_layout.dart';
@@ -203,40 +204,26 @@ class _TransactionDetailScreenState
   }
 
   Future<void> _delete(BuildContext context, ExpenseTransaction item) async {
-    final bool confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text('Delete transaction?'),
-            content: Text(
-              '“${item.title}” will be marked as deleted in your Google Sheet and hidden from this app.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final bool confirmed = await AppFeedback.showConfirmationDialog(
+      context,
+      title: 'Delete transaction?',
+      message:
+          '“${item.title}” will be marked as deleted in your Google Sheet and hidden from this app.',
+      confirmLabel: 'Delete',
+      isDestructive: true,
+    );
     if (!confirmed) return;
     try {
       await ref.read(expenseDataProvider.notifier).deleteTransaction(item.id);
-      if (context.mounted) context.go('/journal');
+      if (context.mounted) {
+        AppFeedback.showSuccess(context, 'Transaction deleted');
+        context.go('/journal');
+      }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              ref.read(expenseDataProvider).error ??
-                  'Could not delete transaction.',
-            ),
-          ),
+        AppFeedback.showError(
+          context,
+          ref.read(expenseDataProvider).error ?? 'Could not delete transaction.',
         );
       }
     }
