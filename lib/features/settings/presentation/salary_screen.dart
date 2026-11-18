@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -48,6 +49,8 @@ class _SalaryScreenState extends ConsumerState<SalaryScreen> {
                 title: 'Connect your spreadsheet',
                 message:
                     'Your salary setting is stored in the Settings worksheet.',
+                actionLabel: 'Connect spreadsheet',
+                onAction: () => context.push('/connect-spreadsheet'),
               ),
             )
           else

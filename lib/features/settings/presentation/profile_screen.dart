@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/utils/app_feedback.dart';
 import '../../../core/widgets/design_system_widgets.dart';
 import '../../../core/widgets/responsive_layout.dart';
 import '../../../features/data/expense_data_provider.dart';
@@ -115,35 +116,24 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _disconnect(BuildContext context, WidgetRef ref) async {
-    final bool confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text('Disconnect this device?'),
-            content: const Text(
-              'This signs out and forgets the workbook ID on this device. The spreadsheet will remain in your Google Drive.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Disconnect'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final bool confirmed = await AppFeedback.showConfirmationDialog(
+      context,
+      title: 'Disconnect this device?',
+      message:
+          'This signs out and forgets the workbook ID on this device. The spreadsheet will remain in your Google Drive.',
+      confirmLabel: 'Disconnect',
+      isDestructive: true,
+    );
     if (!confirmed) return;
     try {
       await ref.read(expenseDataProvider.notifier).disconnect();
-      if (context.mounted) context.go('/home');
+      if (context.mounted) {
+        AppFeedback.showInfo(context, 'Device disconnected');
+        context.go('/home');
+      }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
+        AppFeedback.showError(context, error.toString());
       }
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
 
@@ -49,7 +50,10 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               child: EmptyState(
                 icon: Icons.category_outlined,
                 title: 'Connect your spreadsheet',
-                message: 'Your expense and income categories are stored in the Categories tab of your workbook.',
+                message:
+                    'Your expense and income categories are stored in the Categories tab of your workbook.',
+                actionLabel: 'Connect spreadsheet',
+                onAction: () => context.push('/connect-spreadsheet'),
               ),
             )
           else ...<Widget>[

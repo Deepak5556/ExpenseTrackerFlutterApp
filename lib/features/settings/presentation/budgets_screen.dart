@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -66,7 +67,10 @@ class _BudgetsScreenState extends ConsumerState<BudgetsScreen> {
               child: EmptyState(
                 icon: Icons.savings_outlined,
                 title: 'Connect your spreadsheet',
-                message: 'Budgets are stored in the Budgets worksheet and compared with your live transactions.',
+                message:
+                    'Budgets are stored in the Budgets worksheet and compared with your live transactions.',
+                actionLabel: 'Connect spreadsheet',
+                onAction: () => context.push('/connect-spreadsheet'),
               ),
             )
           else ...<Widget>[

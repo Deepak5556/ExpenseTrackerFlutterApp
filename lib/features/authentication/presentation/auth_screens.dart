@@ -240,67 +240,75 @@ class _OnboardingIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (index == 0) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _MiniBar(height: 72),
-              SizedBox(width: 14),
-              _MiniBar(height: 116),
-              SizedBox(width: 14),
-              _MiniBar(height: 88),
-              SizedBox(width: 14),
-              _MiniBar(height: 142),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '₹ 12,480.52',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                _MiniBar(height: 72),
+                SizedBox(width: 14),
+                _MiniBar(height: 116),
+                SizedBox(width: 14),
+                _MiniBar(height: 88),
+                SizedBox(width: 14),
+                _MiniBar(height: 142),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Text(
+              '₹ 12,480.52',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       );
     }
     if (index == 1) {
       return Center(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.incomeSurface,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const <Widget>[
-              Icon(
-                Icons.table_chart_rounded,
-                color: AppColors.income,
-                size: 48,
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Your Google Sheet',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 16),
-              _SheetLine(),
-              _SheetLine(),
-              _SheetLine(),
-            ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.incomeSurface,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const <Widget>[
+                Icon(
+                  Icons.table_chart_rounded,
+                  color: AppColors.income,
+                  size: 48,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Your Google Sheet',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 16),
+                _SheetLine(),
+                _SheetLine(),
+                _SheetLine(),
+              ],
+            ),
           ),
         ),
       );
     }
     return Center(
-      child: SizedBox(
-        width: 190,
-        height: 190,
-        child: Stack(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: SizedBox(
+          width: 190,
+          height: 190,
+          child: Stack(
           alignment: Alignment.center,
           children: <Widget>[
             SizedBox(
@@ -330,7 +338,8 @@ class _OnboardingIllustration extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -623,16 +632,19 @@ class _LoginForm extends StatelessWidget {
                       ),
                     ],
                   )
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      GoogleMark(),
-                      SizedBox(width: 12),
-                      Text(
-                        'Continue with Google',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                : const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        GoogleMark(),
+                        SizedBox(width: 12),
+                        Text(
+                          'Continue with Google',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
                   ),
           ),
         ),
