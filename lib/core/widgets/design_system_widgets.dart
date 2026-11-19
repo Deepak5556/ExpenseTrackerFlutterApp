@@ -138,23 +138,14 @@ class FloatingActionCard extends StatelessWidget {
         horizontal: AppSpacing.x2,
         vertical: AppSpacing.x3,
       ),
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final double itemWidth =
-              (constraints.maxWidth / (actions.isEmpty ? 1 : actions.length)) -
-              0.5;
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: actions
-                .map(
-                  (QuickAction action) => SizedBox(
-                    width: itemWidth.clamp(48.0, 140.0),
-                    child: _QuickActionButton(action: action),
-                  ),
-                )
-                .toList(growable: false),
-          );
-        },
+      child: Row(
+        children: actions
+            .map(
+              (QuickAction action) => Expanded(
+                child: _QuickActionButton(action: action),
+              ),
+            )
+            .toList(growable: false),
       ),
     );
   }
@@ -168,9 +159,9 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double iconBox = context.responsiveValue(
-      compact: 38,
-      medium: 42,
-      expanded: 46,
+      compact: 40,
+      medium: 44,
+      expanded: 48,
     );
     return Semantics(
       button: true,
@@ -190,13 +181,14 @@ class _QuickActionButton extends StatelessWidget {
                   color: action.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.tile),
                 ),
+                alignment: Alignment.center,
                 child: Icon(
                   action.icon,
                   color: action.color,
-                  size: iconBox * .52,
+                  size: iconBox * 0.52,
                 ),
               ),
-              const SizedBox(height: AppSpacing.x1),
+              const SizedBox(height: 6),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
@@ -239,68 +231,75 @@ class KpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = context.windowSizeClass.isCompact;
     final TextStyle? labelStyle = Theme.of(context).textTheme.labelSmall;
-    final Widget contents = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                label.toUpperCase(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: labelStyle?.copyWith(
-                  color: emphasized
-                      ? AppColors.onGradientSecondary
-                      : AppColors.labels,
-                  fontSize: AppTypography.micro,
-                  letterSpacing: 0.6,
+    final Widget contents = ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: compact ? 88.0 : 96.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: labelStyle?.copyWith(
+                    color: emphasized
+                        ? AppColors.onGradientSecondary
+                        : AppColors.labels,
+                    fontSize: AppTypography.micro,
+                    letterSpacing: 0.6,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            if (icon != null) ...<Widget>[
-              const SizedBox(width: AppSpacing.x1),
-              Icon(
-                icon,
-                size: 16,
-                color: emphasized ? Colors.white : AppColors.accentOrange,
-              ),
+              if (icon != null) ...<Widget>[
+                const SizedBox(width: AppSpacing.x1),
+                Icon(
+                  icon,
+                  size: 16,
+                  color: emphasized ? Colors.white : AppColors.accentOrange,
+                ),
+              ],
             ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.x2),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            maxLines: 1,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color:
-                  valueColor ??
-                  (emphasized ? Colors.white : AppColors.textPrimary),
-              fontSize: compact ? 23 : AppTypography.kpiValue,
-              letterSpacing: -0.5,
-              fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+          ),
+          const SizedBox(height: AppSpacing.x1),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color:
+                    valueColor ??
+                    (emphasized ? Colors.white : AppColors.textPrimary),
+                fontSize: compact ? 22 : AppTypography.kpiValue,
+                letterSpacing: -0.5,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+              ),
             ),
           ),
-        ),
-        if (detail != null) ...<Widget>[
           const SizedBox(height: AppSpacing.x1),
           Text(
-            detail!,
+            detail ?? ' ',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: emphasized
-                  ? AppColors.onGradientSecondary
-                  : AppColors.textSecondary,
+              color: detail != null
+                  ? (emphasized
+                      ? AppColors.onGradientSecondary
+                      : AppColors.textSecondary)
+                  : Colors.transparent,
               letterSpacing: 0,
             ),
           ),
         ],
-      ],
+      ),
     );
 
     if (emphasized) {
@@ -691,43 +690,50 @@ class AppBottomNav extends StatelessWidget {
                   onTap: onAdd,
                   key: const ValueKey<String>('bottom-nav-add'),
                   borderRadius: BorderRadius.circular(AppRadius.tile),
-                  child: Transform.translate(
-                    offset: const Offset(0, -6),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Material(
-                          color: AppColors.brandStart,
-                          shape: const CircleBorder(),
-                          elevation: 4,
-                          shadowColor: AppColors.pressed.withValues(
-                            alpha: 0.35,
-                          ),
-                          child: SizedBox(
-                            width: compact ? 44 : 48,
-                            height: compact ? 44 : 48,
+                  child: Center(
+                    child: Transform.translate(
+                      offset: const Offset(0, -3),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Container(
+                            width: compact ? 42 : 46,
+                            height: compact ? 42 : 46,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppColors.brandGradient,
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: AppColors.brandStart.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
                             child: Icon(
                               Icons.add_rounded,
                               color: Colors.white,
-                              size: compact ? 26 : 28,
+                              size: compact ? 24 : 26,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Add',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: AppColors.brandStart,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0,
-                                ),
+                          const SizedBox(height: 3),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Add',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: AppColors.brandStart,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0,
+                                  ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

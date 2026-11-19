@@ -106,31 +106,42 @@ class HomeScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: <Widget>[
                                     Container(
-                                      width: context.responsiveValue(
-                                        compact: 42,
-                                        medium: 46,
-                                      ),
-                                      height: context.responsiveValue(
-                                        compact: 42,
-                                        medium: 46,
-                                      ),
+                                      width: 44,
+                                      height: 44,
                                       decoration: BoxDecoration(
-                                        color: const Color(0x24FFFFFF),
+                                        color: const Color(0x28FFFFFF),
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.tile,
                                         ),
                                         border: Border.all(
                                           color: const Color(0x38FFFFFF),
+                                          width: 1.5,
                                         ),
                                       ),
-                                      child: const Icon(
-                                        Icons.account_balance_wallet_rounded,
-                                        color: Colors.white,
-                                      ),
+                                      alignment: Alignment.center,
+                                      child: data.accountName != null &&
+                                              data.accountName!.trim().isNotEmpty
+                                          ? Text(
+                                              data.accountName!
+                                                  .trim()
+                                                  .substring(0, 1)
+                                                  .toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 18,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.account_balance_wallet_rounded,
+                                              color: Colors.white,
+                                              size: 22,
+                                            ),
                                     ),
-                                    const SizedBox(width: AppSpacing.x2),
+                                    const SizedBox(width: AppSpacing.x3),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -144,18 +155,19 @@ class HomeScreen extends ConsumerWidget {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .titleMedium
-                                                ?.copyWith(color: Colors.white),
+                                                ?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
+                                          const SizedBox(height: 3),
                                           Container(
-                                            margin: const EdgeInsets.only(
-                                              top: AppSpacing.x1,
-                                            ),
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: AppSpacing.x2,
-                                              vertical: 3,
+                                              vertical: 2,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: const Color(0x1FFFFFFF),
+                                              color: const Color(0x24FFFFFF),
                                               borderRadius:
                                                   BorderRadius.circular(
                                                     AppRadius.pill,
@@ -167,8 +179,8 @@ class HomeScreen extends ConsumerWidget {
                                                   .textTheme
                                                   .labelSmall
                                                   ?.copyWith(
-                                                    color: AppColors
-                                                        .onGradientSecondary,
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
                                                     letterSpacing: 0,
                                                   ),
                                             ),
@@ -176,24 +188,36 @@ class HomeScreen extends ConsumerWidget {
                                         ],
                                       ),
                                     ),
-                                    IconButton(
-                                      tooltip: 'Notifications',
-                                      onPressed: () =>
-                                          context.push('/notifications'),
-                                      icon: const Icon(
-                                        Icons.notifications_none_rounded,
-                                        color: Colors.white,
+                                    const SizedBox(width: AppSpacing.x2),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0x1FFFFFFF),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.tile,
+                                        ),
+                                      ),
+                                      child: IconButton(
+                                        tooltip: 'Notifications',
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: () =>
+                                            context.push('/notifications'),
+                                        icon: const Icon(
+                                          Icons.notifications_none_rounded,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: AppSpacing.x6),
+                                const SizedBox(height: AppSpacing.x5),
                                 Text(
                                   'MONTHLY BALANCE',
                                   style: Theme.of(context).textTheme.labelSmall
                                       ?.copyWith(
                                         color: AppColors.onGradientSecondary,
-                                        letterSpacing: 1,
+                                        letterSpacing: 1.2,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                 ),
                                 const SizedBox(height: AppSpacing.x1),
@@ -235,7 +259,7 @@ class HomeScreen extends ConsumerWidget {
                               0,
                             ),
                             child: Transform.translate(
-                              offset: const Offset(0, -32),
+                              offset: const Offset(0, -26),
                               child: FloatingActionCard(
                                 actions: <QuickAction>[
                                   QuickAction(
@@ -541,89 +565,143 @@ class _MonthlyTrajectory extends StatelessWidget {
       0,
       (int max, int value) => value > max ? value : max,
     );
-    return SurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const SectionHeader(
-            title: 'Monthly expense trajectory',
-            subtitle: 'Compare your spending over the last six months',
-            leading: Icon(Icons.bar_chart_rounded, color: AppColors.brandStart),
-          ),
-          const SizedBox(height: AppSpacing.x3),
-          SizedBox(
-            height: context.responsiveValue(
-              compact: 190,
-              medium: 218,
-              expanded: 238,
+    final compact = context.windowSizeClass.isCompact;
+    return RepaintBoundary(
+      child: SurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const SectionHeader(
+              title: 'Monthly expense trajectory',
+              subtitle: 'Compare your spending over the last six months',
+              leading: Icon(Icons.bar_chart_rounded, color: AppColors.brandStart),
             ),
-            child: BarChart(
-              BarChartData(
-                maxY: maxValue == 0 ? 100 : maxValue / 100 * 1.2,
-                gridData: const FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                barTouchData: BarTouchData(enabled: true),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        final int index = value.toInt();
-                        if (index < 0 || index >= months.length) {
-                          return const SizedBox.shrink();
-                        }
-                        return SideTitleWidget(
-                          meta: meta,
-                          child: Text(
-                            DateFormat('MMM').format(months[index]),
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ),
-                        );
-                      },
+            const SizedBox(height: AppSpacing.x4),
+            SizedBox(
+              height: context.responsiveValue(
+                compact: 190,
+                medium: 218,
+                expanded: 238,
+              ),
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: maxValue == 0 ? 100 : (maxValue / 100) * 1.25,
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
                     ),
                   ),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 32,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          final int index = value.toInt();
+                          if (index < 0 || index >= months.length) {
+                            return const SizedBox.shrink();
+                          }
+                          final bool isCurrent = index == months.length - 1;
+                          return SideTitleWidget(
+                            meta: meta,
+                            space: 6,
+                            child: Text(
+                              DateFormat('MMM').format(months[index]),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: isCurrent ? AppColors.brandStart : AppColors.textSecondary,
+                                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: <BarChartGroupData>[
+                    for (int i = 0; i < values.length; i++)
+                      BarChartGroupData(
+                        x: i,
+                        barRods: <BarChartRodData>[
+                          BarChartRodData(
+                            toY: values[i] <= 0 ? 1.0 : values[i] / 100,
+                            width: compact ? 22 : 26,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6),
+                            ),
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: i == values.length - 1
+                                  ? <Color>[
+                                      AppColors.brandStart,
+                                      AppColors.accentOrange,
+                                    ]
+                                  : <Color>[
+                                      AppColors.border,
+                                      AppColors.border,
+                                    ],
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-                barGroups: <BarChartGroupData>[
-                  for (int i = 0; i < values.length; i++)
-                    BarChartGroupData(
-                      x: i,
-                      barRods: <BarChartRodData>[
-                        BarChartRodData(
-                          toY: values[i] / 100,
-                          width: 22,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6),
-                          ),
-                          gradient: LinearGradient(
-                            colors: i == values.length - 1
-                                ? <Color>[
-                                    AppColors.brandStart,
-                                    AppColors.accentOrange,
-                                  ]
-                                : <Color>[AppColors.border, AppColors.border],
-                          ),
-                        ),
-                      ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x3,
+                vertical: AppSpacing.x2,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.pageBackground,
+                borderRadius: BorderRadius.circular(AppRadius.tile),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.brandStart,
+                      shape: BoxShape.circle,
                     ),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Text(
+                    'This month',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    formatMoney(values.isEmpty ? 0 : values.last),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          Text(
-            'This month · ${formatMoney(values.isEmpty ? 0 : values.last)}',
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -702,18 +780,26 @@ class _CategorySummary extends StatelessWidget {
                         ),
                         Text(
                           formatMoney(totals[category.id] ?? 0),
-                          style: Theme.of(context).textTheme.labelLarge,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontFeatures: const <FontFeature>[
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.x2),
                         ConstrainedBox(
-                          constraints: const BoxConstraints(minWidth: 38),
+                          constraints: const BoxConstraints(minWidth: 42),
                           child: Text(
                             '${total == 0 ? 0 : ((totals[category.id] ?? 0) * 100 / total).round()}%',
                             textAlign: TextAlign.end,
                             maxLines: 1,
                             overflow: TextOverflow.fade,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: AppColors.textSecondary),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontFeatures: const <FontFeature>[
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -811,6 +897,9 @@ class _TransactionTile extends StatelessWidget {
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: isIncome ? AppColors.income : AppColors.brandStart,
                     fontWeight: FontWeight.w700,
+                    fontFeatures: const <FontFeature>[
+                      FontFeature.tabularFigures(),
+                    ],
                   ),
                 ),
               ),
