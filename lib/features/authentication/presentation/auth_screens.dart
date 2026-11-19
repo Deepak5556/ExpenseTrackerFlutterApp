@@ -48,10 +48,21 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  WalletMark(
-                    size: context.responsiveValue(compact: 66, medium: 76),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      context.responsiveValue(compact: 24, medium: 28),
+                    ),
+                    child: Image.asset(
+                      'assets/logo/AppFlashScreen.png',
+                      width: context.responsiveValue(compact: 110, medium: 130),
+                      height: context.responsiveValue(compact: 110, medium: 130),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => WalletMark(
+                        size: context.responsiveValue(compact: 66, medium: 76),
+                      ),
+                    ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Text(
                     'Expense Journal & Budget',
                     style: TextStyle(
@@ -63,8 +74,8 @@ class _SplashScreenState extends State<SplashScreen>
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
                     'Your money, clearly in view',
                     style: TextStyle(
                       color: AppColors.onGradientSecondary,
@@ -823,18 +834,27 @@ class WalletMark extends StatelessWidget {
   const WalletMark({super.key, this.size = 64});
   final double size;
   @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(size * 0.28),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.26)),
-    ),
-    child: Icon(
-      Icons.account_balance_wallet_rounded,
-      color: Colors.white,
-      size: size * 0.54,
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(size * 0.24),
+    child: Image.asset(
+      'assets/logo/AppLogo.png',
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(size * 0.28),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.26)),
+        ),
+        child: Icon(
+          Icons.account_balance_wallet_rounded,
+          color: Colors.white,
+          size: size * 0.54,
+        ),
+      ),
     ),
   );
 }
