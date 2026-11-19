@@ -17,7 +17,6 @@ import '../features/settings/presentation/profile_screen.dart';
 import '../features/settings/presentation/privacy_screen.dart';
 import '../features/settings/presentation/spreadsheet_setup_screen.dart';
 import '../features/settings/presentation/salary_screen.dart';
-import '../features/transactions/presentation/edit_transaction_screen.dart';
 import '../features/transactions/presentation/transaction_detail_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/transactions/presentation/journal_screen.dart';
@@ -191,7 +190,7 @@ GoRouter createAppRouter({
         path: '/transaction/:id/edit',
         pageBuilder: (BuildContext context, GoRouterState state) => _fadePage(
           state,
-          EditTransactionScreen(transactionId: state.pathParameters['id']!),
+          AddTransactionScreen(transactionId: state.pathParameters['id']!),
         ),
       ),
       GoRoute(

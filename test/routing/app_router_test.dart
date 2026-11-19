@@ -47,7 +47,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey<String>('bottom-nav-add')));
     await tester.pumpAndSettle();
-    expect(find.text('Add transaction'), findsOneWidget);
+    expect(find.text('Add expense'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey<String>('bottom-nav-3')));
     await tester.pumpAndSettle();

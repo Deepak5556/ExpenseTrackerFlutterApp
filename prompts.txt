@@ -1,0 +1,385 @@
+Expense Journal & Budget — ChatGPT Prompt Pack
+Phase-by-phase prompts for building the Flutter + Google Sheets expense tracker with ChatGPT. Layout from your purple mobile screenshot; colours and content from your orange dashboard and transactions screenshots.
+How to use this pack
+1.  Start a new ChatGPT Project (or a fresh chat) with a strong coding model and web browsing on, so it can check current package docs.
+2.  Paste Prompt 0A (project brief). Wait for it to reply “Ready for Prompt 0B”.
+3.  Paste Prompt 0B (design system) and attach your three screenshots to that same message. Wait for its design summary.
+4.  Paste Phase 1. Run its commands, work through its test checklist, then reply “Phase 1 works” (or paste the exact error using the Fix prompt at the end). Only then paste Phase 2, and continue through Phase 13.
+5.  If an answer is cut off, reply: Continue from the last complete file, repeating its path header. If ChatGPT starts forgetting file names (usually after 2–3 phases), open a new chat and use the Resume prompt.
+6.  Commit to Git after every phase that works. In a ChatGPT Project, also save Prompt 0A and 0B as Project files so every new chat starts with them.
+Decisions I made for you
+Each of these is a deliberate change or addition to your master prompt. Edit the prompts if you disagree.
+• SF Pro is replaced by Inter. Apple’s licence limits SF Pro to Apple-platform apps and mock-ups, so shipping it inside an Android app on Google Play isn’t allowed. Inter is the standard free look-alike, and the font is a one-line swap in the prompts. Check Apple’s font licence yourself if you plan a different arrangement.
+• A time column is added to Transactions. Your Add Expense form and the Journal table both need a time, but the master column list had none.
+• Models move from Phase 5 to Phase 4, because the repositories need them.
+• Budget goal added. The mobile reference has a Budget card, so Settings gets a monthlyBudget value. Delete the budget lines in Phases 8 and 9 if you don’t want it.
+• Salary rule defined. Salary counts once per month from the setup month onward, and an income entry in the Salary category replaces it for that month, so nothing is counted twice. It is written into Prompt 0A and unit-tested in Phase 6.
+• Packages aren’t pinned. ChatGPT must resolve versions with flutter pub add and read current docs. Google Sign-In’s API was rebuilt in v7 (initialize, authenticate, separate authorization), so most older tutorials are wrong, and extension_google_sign_in_as_googleapis_auth v3 is the release that works with it. go_router is the only package added to your list (for app_router.dart).
+• Light theme only in v1, built so dark mode can be added later.
+Prompt 0A — Project brief (paste first)
+Paste this once at the start of a chat, or save it as a Project file.
+You are my senior Flutter/Dart engineer, Google APIs (Drive v3 + Sheets v4) specialist, Material 3 UI engineer and Android release engineer.
+
+We are building “Expense Journal & Budget”: a production-quality, Android-only expense tracker in Flutter + Dart, delivered in 13 phases. Do NOT write code yet. Read this brief, then reply only with “Ready for Prompt 0B” and a 5-line summary of the architecture.
+
+1. NON-NEGOTIABLE ARCHITECTURE
+- No backend server and no database. The user’s own Google Sheet, stored in their Google Drive, is the single source of truth.
+- Forbidden: Firebase, Firestore, Realtime Database, SQLite, Hive, Isar, Supabase, MySQL, MongoDB, any custom PHP/Node/Python server, any paid data service.
+- Allowed: in-memory state (Riverpod) and SharedPreferences for non-sensitive metadata only (spreadsheet ID, onboarding-done flag, last viewed month, currency). Never store tokens, passwords or expense data there.
+- Version 1 is online-first: no offline transaction cache and no fake “saved” states. A success message appears only after Google’s API confirms the write. If a write fails, keep the form values in memory, show the reason and offer Retry.
+- If something I ask for is impossible without a backend, explain why and wait for my decision. Never silently add a service or package.
+
+2. STACK (never pin versions from memory: install with flutter pub add, then read each package’s current official docs and changelog)
+Flutter stable + Dart 3, Material 3, flutter_riverpod (Notifier/AsyncNotifier API, no code generation), go_router, google_sign_in (current major, v7+: GoogleSignIn.instance.initialize(), authenticate(), supportsAuthenticate(), authorizationClient.authorizationForScopes() / authorizeScopes(); the old signIn()/signInSilently()/constructor API is removed, so ignore older tutorials), googleapis + googleapis_auth (Drive v3, Sheets v4), extension_google_sign_in_as_googleapis_auth (v3+, builds the client from GoogleSignInClientAuthorization.authClient(scopes: ...)), fl_chart, intl, uuid, shared_preferences, url_launcher, google_mobile_ads (Phase 12 only). No other packages unless you justify them and I approve. Add each package in the phase that needs it, never earlier.
+
+3. GOOGLE ACCESS AND SECURITY
+- Least privilege: start with only https://www.googleapis.com/auth/drive.file. Any extra scope needs my approval, a written reason and a note on the Google verification impact.
+- No client secrets or service-account keys in the app. OAuth client IDs are public identifiers, but keep them out of source via --dart-define or a gitignored file.
+- Never log tokens or expense data. Never make the sheet public. Send data nowhere except the Google APIs the user authorised.
+- Handle: login cancelled, auth failure, expired access, revoked permission, reconnect, logout, disconnect.
+
+4. GOOGLE SHEET SCHEMA (schemaVersion = 1). File name: Expense_Tracker_Data, tagged with Drive appProperties so the app can rediscover it.
+Worksheet Transactions (row 1 = headers): transactionId | createdAt | date | time | monthKey | title | amount | category | type | paymentMethod | notes | updatedAt
+ - date = yyyy-MM-dd text, time = HH:mm text, monthKey = yyyy-MM, type = Expense or Income, amount = positive number, createdAt/updatedAt = ISO-8601 UTC.
+ - transactionId = UUID-based, generated on the device. Row numbers are never identities.
+Worksheet Settings (key | value | updatedAt): schemaVersion, setupCompleted, setupMonth, monthlySalary, monthlyBudget, currency, displayName, defaultMonth.
+Worksheet Categories: categoryId | name | type (Expense or Income) | status (active or archived).
+Default expense categories: Food, Tea/Coffee, Fruits, Shopping, Travel, Transport, Bills, Entertainment, Health, Education, Other. Default income categories: Salary, Freelancing, Business, Other income.
+Always write with valueInputOption RAW, never USER_ENTERED.
+
+5. FINANCIAL RULES (implement exactly, unit-test every one)
+- Filter by transaction date / monthKey, never by the day the app is opened.
+- totalExpenses(M) = sum of Expense transactions in month M.
+- baseIncome(M) = monthlySalary for every month from setupMonth through the current month, 0 outside that range. If Income transactions with category Salary exist in M, their sum replaces monthlySalary for M (no double counting).
+- totalIncome(M) = baseIncome(M) + sum of the other Income transactions in M.
+- remaining(M) = totalIncome(M) − totalExpenses(M). savingsRate = totalIncome > 0 ? remaining / totalIncome × 100 : 0.
+- Handle zero income, negative balance and empty lists without errors. Year and all-time views sum the months from setupMonth to the current month.
+- Do money arithmetic in integer minor units (paise) or equivalent exact rounding, never raw double sums. Format with intl, INR by default (Indian grouping, ₹1,00,000); currency selectable later.
+- Sanity sample: salary 17,000; November expenses Food 274 + Tea/Coffee 112 + Fruits 60 = 446; remaining 16,554; savings rate 97.38%; expense share 2.6%; category ratios 61%, 25%, 13%.
+
+6. FOLDER ARCHITECTURE (feature-first; UI, state, data and Google API code strictly separated)
+lib/main.dart, lib/app.dart
+lib/core/{constants,theme,utils,errors,widgets}
+lib/services/{google_auth_service,google_drive_service,google_sheets_service,ads_service}.dart
+lib/models/{expense_model,income_model,category_model,user_settings_model}.dart
+lib/repositories/{expense_repository,category_repository,settings_repository}.dart
+lib/features/{authentication,dashboard,expenses,transactions,income,categories,analytics,settings}/ each with presentation/ and application/ (Riverpod notifiers)
+lib/routing/app_router.dart
+UI never calls Google APIs directly: UI → Riverpod notifiers → repositories → services. main.dart holds startup code only.
+
+7. HOW WE WORK, EVERY PHASE
+Each phase answer must contain, in this order: (1) objective, (2) prerequisites, (3) list of files created or changed with full paths, (4) COMPLETE code for every file in its own code block headed by its path, with all imports, no pseudocode, no “implement later”, no “rest unchanged” gaps, (5) terminal commands, (6) Google Cloud / Console steps if any, (7) how to run, (8) a test checklist I can tick, (9) an implementation checklist for all 13 phases (Done / In progress / Pending), (10) a stop line, then wait for me to say “Phase N works”.
+- Before changing existing code, ask me to paste pubspec.yaml and the output of find lib -type f | sort if you don’t have them. Never overwrite working files without saying what changes and why. Give whole files when more than about 30% changes.
+- Code quality: flutter analyze must be clean, dart format applied, null-safe, const where possible, and no APIs deprecated in the installed Flutter (for example withValues not withOpacity, PopScope not WillPopScope, textScaler not textScaleFactor, WidgetState not MaterialState). If you are not sure an API exists in my installed version, say so and tell me how to check instead of guessing.
+- Do not change packages, architecture or file names between phases without telling me first.
+
+Reply now with: Ready for Prompt 0B + a 5-line architecture summary.
+Prompt 0B — Design system (attach your 3 screenshots)
+Send this with the three screenshots attached, right after ChatGPT says “Ready for Prompt 0B”.
+Attached: screenshot 1 (purple mobile app), screenshot 2 (orange/red dashboard), screenshot 3 (transactions table). Study them together with the spec below. Do NOT write code yet. Reply with a 10-line summary of the design language and at most 3 questions.
+
+DESIGN INTENT
+Premium, modern fintech app: white and warm light-grey surfaces, orange and red accents, large clean numerals, rounded cards, soft shadows, smooth motion.
+- Screenshot 1 is the LAYOUT and INTERACTION reference: curved gradient header with a centred balance, floating white quick-action card overlapping the header, soft banner, list rows with rounded-square icon tiles and red amounts, 5-slot bottom navigation, a gradient chart header with one highlighted bar, a Budget card, and two category cards.
+- Screenshots 2 and 3 are the COLOUR, DATA and CONTENT reference: orange-red gradient, KPI cards (Monthly Salary, Expenses, Remaining Balance, Savings Rate), month selector, monthly expense trajectory bars, category donut with ratio pills, transactions table with category pills and time chips.
+- Result: screenshot 1’s mobile structure, recoloured with the Ember palette below, carrying the information of screenshots 2 and 3. Never use the purple. Never just shrink the desktop layout: adapt it for thumbs and small screens.
+
+COLOUR TOKENS (light theme only in v1; approximated from the screenshots; keep all of them in one file as a ThemeExtension plus ColorScheme so dark mode can be added later)
+- Brand gradient #B3260F → #D5401A → #E85A1C (header, hero card, splash). Deepest red #8F1A07 for pressed states.
+- Accent orange #F26A1B. Amber #E08A0B. Active month and expense amounts #B3260F.
+- Page background #F5F1EF, cards #FFFFFF, muted surface #FAF7F6, border #EDE6E3, divider #F1EBE8.
+- Text: primary #1C1917, secondary #57534E, labels #8A817C. On gradient: white and white at 78%.
+- Semantic: income and surplus #12A150 on #E7F6EE. Time chip text #2D5BD0 on #E8F0FE. Orange pill text #C2410C on #FFEADD. Amber pill text #B45309 on #FFF1D6.
+- Chart palette (warm, ordered): #F26A1B, #E08A0B, #C42A0E, #F5B84A, #8C3B1F, #FF9A6B, neutral #A8A29E for Other. Always show percentages so colour is never the only signal.
+- Check contrast: normal text at least 4.5:1 (white on orange needs care).
+
+TYPOGRAPHY (SF Pro look)
+- Apple’s licence forbids shipping SF Pro in an Android app, so bundle Inter (open-source licence) as local font assets, with no runtime download. Keep the family name in one constant in AppTypography so changing the font is a one-line edit.
+- Scale in sp: large title 34; titles 28 / 22 / 20; headline 17 semibold; body 17; callout 16; subhead 15; footnote 13; captions 12 / 11. Hero amount 44 semibold, KPI value 26 semibold, micro-labels 11 medium uppercase with +0.6 tracking.
+- Weights 400, 500, 600, 700 only. Slight negative tracking on large numerals, about 0 at 12–13 sp.
+- All money uses tabular figures (FontFeature.tabularFigures) so digits align in lists and animate without jitter.
+
+SHAPE, SPACING, ELEVATION
+- 4-pt spacing scale (4, 8, 12, 16, 20, 24, 32, 40). Page padding 20 on phones, 24 on medium, content max-width 1200 on expanded.
+- Radii: cards 24, tiles and inputs 16, sheets 28 (top), pills fully round. Use continuous (squircle) corners where the installed Flutter supports them.
+- Cards: white, 1 px border #EDE6E3, shadow 0 8 24 at 6% of #1C1917. Floating quick-action card: stronger shadow 0 16 40 at 18% of #781E0A, overlapping the header by about 40.
+- Icons: Flutter’s built-in rounded Material icons, 24 px, no extra icon package.
+
+MOTION (smooth, 60 fps)
+- Durations: 120 ms (press, scale to 0.97), 240 ms (state changes), 400–600 ms (charts, counters). Curve easeOutCubic. Page transitions about 300 ms (fade-through or shared-axis).
+- Numbers count from the previous value to the new one. Bars grow from zero on first show. The donut sweeps in. List items fade and slide 12 px, staggered, once, first 8 only.
+- Skeleton shimmer while loading (own widget, no package). Pull-to-refresh. Light haptics (selectionClick on chip or month changes, lightImpact on a confirmed save).
+- Honour system reduced motion (MediaQuery.disableAnimations): skip stagger, shimmer and counters.
+- Performance: const widgets, RepaintBoundary around charts, slivers / ListView.builder, select() on providers, no layout work inside animations.
+
+RESPONSIVE (Material window size classes by width in dp)
+- Compact under 600: phones. Single column, bottom navigation (Home, Journal, raised centre Add button, Analytics, Settings), cards and lists as in screenshot 1.
+- Medium 600–839: large phones, foldables, small tablets. Two-column sections, navigation rail allowed.
+- Expanded 840 and up: tablets and landscape. Navigation rail plus the desktop-style layout of screenshots 2 and 3 (four-up KPI row, chart and donut side by side, journal as a table).
+- Test sizes: 320×568, 360×800, 412×915, 600×960, 840×1200 and landscape. System text scale up to 1.3 must never overflow: use Flexible, ellipsis and FittedBox for hero amounts, clamp text scaling at 1.3, honour SafeArea and keyboard insets, edge-to-edge system bars with light icons over gradients, no hard-coded heights.
+
+REUSABLE COMPONENTS (keep these names in every phase)
+GradientHeader, FloatingActionCard, SurfaceCard, KpiCard, BalanceHeroCard, PillBadge, CategoryChip, CategoryIconTile, TransactionTile, TransactionTableRow, MonthChipStrip, AmountText, ExpenseBarChart (onGradient option), CategoryDonut, ShimmerBox, EmptyState, ErrorState, ConfirmDialog, AppBottomNav, SyncStatusChip, AdSlot.
+
+Reply now with the 10-line design summary and at most 3 questions. Then wait for Phase 1.
+Phase 1 — Project setup, architecture, theme and design foundation
+You end with: a running Android app, your folder structure, the Ember theme, and a preview screen that already looks like your screenshots.
+PHASE 1 — Project setup, architecture, theme and design foundation
+
+Follow Prompt 0A and Prompt 0B. Do these in order and stop at the end.
+
+A. Summarise the architecture in 12 lines or fewer and confirm explicitly that no backend and no database is used.
+B. List the prerequisites and the exact verification commands for my OS (tell me which OS you assume): flutter --version, flutter doctor -v, dart --version, java -version, adb devices, flutter doctor --android-licenses. Say what each output should show and how to fix common failures. I need Android Studio with the Android SDK, and either a physical Android phone with USB debugging or an emulator.
+C. Ask me for my organisation reverse-domain (for example com.yourname), then give the exact project creation command: Android only, project name expense_journal_budget. Warn me that the applicationId becomes permanent after publishing. The launcher label must be Expense Journal & Budget, correctly XML-escaped (&amp;).
+D. Install only this phase’s packages with flutter pub add: flutter_riverpod, go_router, intl, uuid, shared_preferences, url_launcher, fl_chart. Print the resolved versions from pubspec.lock. Give a table of every later package and the phase that adds it. Check compileSdk, minSdk, Kotlin and Gradle settings against the plugins planned for later phases (read each plugin’s README) and tell me exactly what to change now.
+E. Give shell commands that create the complete folder structure from Prompt 0A (empty folders, plus only the files that exist in this phase).
+F. Write main.dart (WidgetsFlutterBinding, ProviderScope, edge-to-edge transparent system bars, portrait and landscape allowed), app.dart (MaterialApp.router, light theme, text-scale clamp 0.9–1.3) and routing/app_router.dart (go_router with routes /splash and /dev/preview for now).
+G. Build the design foundation exactly as Prompt 0B describes: AppColors plus ThemeExtension, AppTypography (Inter as local assets: give the download source, licence note, pubspec fonts block and file paths), AppSpacing, AppRadius, AppShadows, AppMotion, and buildLightTheme() with Material 3 ColorScheme, TextTheme and component themes (AppBar, Card, Input, Chip, buttons, NavigationBar, BottomSheet, Dialog, SnackBar, Switch, Divider) using the *ThemeData types required by my installed Flutter. Add WindowSizeClass helpers (compact / medium / expanded), a ResponsiveBuilder, a money formatter (intl, INR, Indian grouping, compact option) and date formatters.
+H. Build these core widgets in lib/core/widgets: GradientHeader (curved bottom), SurfaceCard, FloatingActionCard, KpiCard, PillBadge, AmountText (tabular figures, animated count), SectionHeader, ShimmerBox, EmptyState, AppBottomNav (4 tabs plus a raised centre Add button).
+I. Write a temporary lib/dev/design_preview_screen.dart with static sample values that proves the look: gradient header with balance, floating quick actions, KPI cards, pill badges, shimmer and bottom navigation. It must render correctly at 360×800, 412×915, 600×960 and 1024×768 (expanded: navigation rail and a four-up KPI row). Add a comment that it is deleted in Phase 6.
+J. Tell me how to run it (flutter pub get, flutter analyze must be clean, flutter run), what I should see, and a test checklist: rotate the phone, system text size at maximum, a small screen, hot reload.
+K. Add two unit tests: the money formatter (₹1,00,000 / 0 / negative values) and the WindowSizeClass breakpoints.
+
+Stop after delivering the answer. Wait for me to say “Phase 1 works”.
+Phase 2 — Google Cloud setup, Google Sign-In and the first screens
+You end with: sign-in working end to end, a configured Google Cloud project, and the splash, onboarding and login screens.
+PHASE 2 — Google Cloud setup, Google Sign-In, authorization and the first three screens
+
+Goal: Splash → Onboarding → Login → Google account → authorization → a signed-in placeholder screen. No Drive or Sheets work yet, except one harmless call proving the access token works (Drive about.get with fields=user).
+
+1. Read first: the current official google_sign_in docs, its 7.0 migration guide and the google_sign_in_android README for the installed version. Tell me which API surface you will use and confirm you are not using removed v6 APIs. Expected: initialize() once at startup; attemptLightweightAuthentication() for silent restore; authenticate() on button press; authenticationEvents; authorizationClient.authorizationForScopes() for silent access tokens and authorizeScopes() (user-initiated) when consent is needed; signOut(); disconnect(). Build the googleapis client with extension_google_sign_in_as_googleapis_auth v3+ (authorization.authClient(scopes: ...)); if it is incompatible with the installed google_sign_in, explain and build the client from the access token with googleapis_auth instead.
+2. Google Cloud walkthrough with exact click paths: create the project; enable the Google Drive API and Google Sheets API; configure the OAuth consent screen / Google Auth Platform (External, app name Expense Journal & Budget, support email, privacy-policy URL placeholder, only the drive.file scope, me as a test user); create an Android OAuth client (package name + SHA-1 of my debug keystore, with the exact command for my OS) and a Web client ID (used as serverClientId on Android if the current package requires it). Explain what changes for release (Play App Signing SHA-1) and the limits of Testing status (test-user cap, short-lived authorisation).
+3. Show where the client IDs live without secrets in source (--dart-define or a gitignored config file) and why no client secret is ever needed.
+4. Code: services/google_auth_service.dart (initialize, restore, signIn, requestScopes, authorised client, signOut, disconnect, reconnect); typed AuthFailure classes in core/errors (cancelled, network, playServices, scopeDenied, tokenExpired, permissionRevoked, unknown); features/authentication (sealed AuthState, AuthController Notifier, providers); a go_router redirect driven by auth state. Access tokens are short-lived: re-request them silently before API use and on a 401, and fall back to a user-initiated prompt if that fails.
+5. Screens (Prompt 0B tokens and core widgets):
+ - Splash: brand gradient, logo mark built in code (wallet glyph in a rounded square), app name, fade and scale in. Navigate when the restore check finishes, never after a fixed sleep.
+ - Onboarding (first launch only, flag in SharedPreferences): 3 PageView slides — Track every rupee / Your data stays in your Google Sheet / See where it goes — each with a mini illustration built from Flutter widgets (bars, sheet, donut) on a white card over the gradient; animated dots; Skip; Get started.
+ - Login: gradient upper area with logo and tagline; white rounded bottom card with a Continue with Google button that follows Google’s current branding guidelines; short privacy line; loading state; inline cancelled/failed messages with Retry.
+ - Signed-in placeholder: avatar, name, email, granted scopes, token-test result, Sign out and Disconnect buttons.
+6. Handle: cancel, no network, Play services missing or outdated, consent denied, expired token, revoked access (401/403 → Reconnect screen), and the difference between sign out and disconnect.
+7. Prove that no token is ever logged (give me the grep command).
+8. Test checklist: fresh install; cancel at the account picker; deny the permission; airplane mode; revoke the app in my Google Account permissions and reopen; sign out and in; switch accounts; kill and restart the app.
+
+Stop and wait for “Phase 2 works”.
+Phase 3 — Drive integration and automatic spreadsheet creation
+You end with: a spreadsheet created automatically in the user’s Drive, with three worksheets, headers and default data.
+PHASE 3 — Google Drive integration and automatic spreadsheet creation
+
+Goal: after sign-in the app finds or creates the user’s Expense_Tracker_Data spreadsheet in their Drive and prepares all three worksheets. No transaction CRUD yet.
+
+1. services/google_drive_service.dart (Drive v3):
+ - findAppSpreadsheet(): query by the appProperties tag (app = expense_journal_budget) plus the spreadsheet mimeType plus trashed = false, not by name alone. Handle 0, 1 and many results (many: prefer the ID saved locally, else the most recently modified, and warn me).
+ - createSpreadsheet(): files.create with mimeType application/vnd.google-apps.spreadsheet, name Expense_Tracker_Data and the appProperties tag.
+ - getFileMetadata(id): name, trashed, owners, modifiedTime, webViewLink, capabilities.canEdit, mimeType.
+ - openInSheetsUrl(id). Trashing or deleting is not built yet (later, only behind explicit consent).
+2. In services/google_sheets_service.dart add only initialiseWorkbook(spreadsheetId): one batchUpdate that renames the first sheet to Transactions, adds Settings and Categories, writes the header rows from Prompt 0A, freezes row 1 and sets column formats (amount numeric; date, time and monthKey plain text). Then seed Settings (schemaVersion 1, setupCompleted false, setupMonth, monthlySalary 0, monthlyBudget 0, currency INR, displayName from the Google profile, defaultMonth) and the default expense and income categories. RAW values only.
+3. SpreadsheetConnectionRepository plus provider with states noSpreadsheet → creating → validating → ready | needsRepair | missing | noPermission | failed. Save spreadsheetId, schemaVersion and lastValidatedAt in SharedPreferences. With a saved ID on launch: getFileMetadata; trashed or 404 → missing; 403 → noPermission; otherwise validate (Phase 4 extends validation).
+4. No duplicate files: an in-flight lock plus a re-query before create; if a create call timed out, search by appProperties before retrying.
+5. First-run Setting up your sheet screen: animated stepper (Finding sheet, Creating sheet, Preparing worksheets, Done), then a salary setup bottom sheet (What’s your monthly salary? numeric, currency INR) saved to the Settings worksheet, which also sets setupCompleted and setupMonth. Error states with Retry, Create new sheet and Connect later.
+6. In core/errors map Google API status codes to AppFailure (401 auth, 403 permission or quota, 404 missing, 429 rate limit, 5xx server, timeout, socket errors). Add a retry helper with exponential backoff and jitter for 429, 5xx and network errors only, and a timeout on every request.
+7. Unit tests for the failure mapper and the retry helper, using fakes.
+8. Manual test: brand-new Google account (file appears in Drive with 3 tabs, correct headers, seeded Settings and Categories); second launch (reused, not duplicated); trash the file in Drive and reopen (missing state); uninstall and reinstall (is the file rediscovered under drive.file? Tell me honestly if not, and what the fallback is).
+
+Stop and wait for “Phase 3 works”.
+Phase 4 — Models, Sheets read/write layer and repositories
+You end with: a tested data layer with models and repositories. The only new UI is a temporary debug screen.
+PHASE 4 — Models, Google Sheets read/write layer and repositories
+
+Goal: a complete, safe Sheets data layer behind repositories, with the data models it needs. The only UI is a temporary debug screen.
+
+1. Models in lib/models: immutable, with copyWith, equality, toSheetRow and fromSheetRow. One TransactionModel (type: expense or income; money as integer minor units; date and time kept as the strings the user picked, so there is no timezone drift) exposed through expense_model.dart and income_model.dart (explain your split), plus CategoryModel and UserSettingsModel.
+2. In services/google_sheets_service.dart write separate, documented, typed functions: createWorksheets (idempotent), initializeHeaders, readAll (one values.batchGet for Transactions, Settings and Categories), readTransactions, appendTransaction, updateTransaction (by transactionId), deleteTransaction (by transactionId: find the row, then batchUpdate deleteDimension using the numeric sheetId), readSettings, updateSettings (upsert by key), readCategories, updateCategories, validateSpreadsheet, reconnect.
+3. validateSpreadsheet returns a typed ValidationResult: readable, canEdit, required worksheets present (by title), header row matches the Prompt 0A schema, schemaVersion supported. Mark which problems are auto-repairable (missing worksheet or header) and never overwrite user data.
+4. Parsing must tolerate blank rows, extra columns, numbers stored as text and invalid rows (skip and report them, never crash). Read with valueRenderOption UNFORMATTED_VALUE; write with RAW. RAW already stops Sheets evaluating input, but still neutralise a leading = + - @ in text fields for CSV/Excel exports and explain how you reverse it on read. Trim and limit field lengths.
+5. Idempotent retries: the transactionId is generated on the device before the first attempt; if an append times out with an unknown outcome, read the sheet back by transactionId before any retry; detect duplicate IDs on read and on write.
+6. Conflict detection: every row has updatedAt. For update and delete, re-read the row, compare updatedAt with the version the user loaded, and throw ConflictFailure (carrying the current row) on mismatch. State the residual race window plainly in code comments and in your answer, because Sheets has no atomic compare-and-set.
+7. Quota-friendly: read everything once per session and on pull-to-refresh; apply successful writes to the in-memory state instead of re-reading; handle 429 with Retry-After or backoff.
+8. Repositories in lib/repositories: ExpenseRepository, CategoryRepository, SettingsRepository, each an abstract interface plus a Sheets-backed implementation, wired through Riverpod providers. UI will only use repositories.
+9. Temporary lib/dev/sheet_debug_screen.dart with buttons Validate, Read all, Append sample, Update sample, Delete sample, showing results and errors. It is deleted in Phase 11.
+10. Unit tests with a fake sheets service: row↔model mapping, parsing edge cases, duplicate-ID detection, conflict logic, retry after a timeout.
+11. Manual test in the real sheet, including editing a row by hand in Google Sheets and then running Update to trigger the conflict path.
+
+Stop and wait for “Phase 4 works”.
+Phase 5 — Expense CRUD: Add, Edit, Delete
+You end with: Add, Edit and Delete working against your real Google Sheet, with honest save states.
+PHASE 5 — Expense CRUD: Add, Edit, Delete
+
+Models already exist from Phase 4. This phase is state, validation and screens.
+
+1. Riverpod: TransactionsController (AsyncNotifier) holding the in-memory list and status, with add, edit and delete returning a typed result; a selectedMonth provider (defaults to the defaultMonth setting, else the current month); validators in core/utils with unit tests.
+2. Add Expense screen: a full-screen route on compact widths, a centred dialog on expanded widths.
+ - Gradient mini header (close button, Add expense).
+ - Hero amount field: ₹ prefix, numeric keyboard, tabular figures, autofocus.
+ - Segmented control Expense | Income (income is finished in Phase 8; here it only switches the type and the category list).
+ - Category chips with icons (wrapping, plus a + New chip that opens a small add-category sheet).
+ - Title field, date tile and time tile (native pickers, default now), payment-method chips (Cash, UPI, Card, Net banking, Other), notes (multiline, 200 characters).
+ - Sticky bottom Save expense button with a progress state.
+3. Validation, shown inline: title required (max 60), amount greater than 0 with at most 2 decimals and a sane upper bound, category required, date not absurd.
+4. Saving: no success state until Sheets confirms. On success: light haptic, animated check, close, and the lists update in place. On failure: inline error banner with the reason and Retry; form values preserved, including a confirm-discard dialog on accidental back.
+5. Edit: the same screen prefilled by transactionId, showing Last updated. On ConflictFailure show a dialog: Changed elsewhere → Review changes / Keep mine (re-read, then overwrite) / Cancel.
+6. Delete: confirmation dialog with title and amount, delete by transactionId, success snackbar. No fake Undo.
+7. Duplicate prevention: disable Save while saving; reuse the same transactionId on Retry.
+8. Until Phase 6, show a temporary list on the signed-in home screen so I can see the data.
+9. Tests: validators (unit); the Add form shows errors and disables Save while saving (widget).
+10. Manual test: add 3 expenses and check the Sheet rows; edit one; delete one; turn on airplane mode while saving (clear error, form kept) then Retry; change the same row by hand in Google Sheets, then edit it in the app to see the conflict dialog.
+
+Stop and wait for “Phase 5 works”.
+Phase 6 — Dashboard and financial calculations
+You end with: the real dashboard — screenshot 1’s layout, screenshot 2’s content — driven by live sheet data and a fully tested calculator.
+PHASE 6 — Dashboard UI and financial calculations
+
+1. Write core/utils/finance_calculator.dart: pure Dart, no Flutter imports, using the rules in Prompt 0A section 5. Provide: totals for a month, a year and all time; baseIncome with the salary rule; remaining; savingsRate; expense share of income; category breakdown (amount, ratio, count, sorted); a Jan–Dec series for a year; previous-month change in percent; daily average. Write at least 20 unit tests covering zero income, negative balance, empty list, future months, month boundaries (31 Oct 23:59 vs 1 Nov 00:00), rounding (0.1 + 0.2), a Salary income entry overriding monthlySalary, and the sample in Prompt 0A.
+2. Dashboard, compact layout (screenshot 1 structure, screenshot 2 content):
+ - Gradient header with curved bottom: avatar (Google photo, initials fallback), a search pill that opens the Journal search, an analytics icon button, and a SyncStatusChip (Live synced, last sync time). Centred caption (display name · currency), hero Remaining Balance as AmountText, and a month selector pill (Nov 2026 ⌄) that opens a month and year picker sheet.
+ - FloatingActionCard overlapping the header: Add expense, Add income, Journal, More (an icon in a tinted rounded square plus a label; More opens a sheet with Categories, Analytics, Settings).
+ - A banner slot under it for sync problems, budget alerts or a first-run tip (dismissible).
+ - KPI grid, 2×2: Monthly Salary (edit icon opens the salary sheet), Expenses (x% of income spent), Extra Income, Savings Rate (with a progress bar).
+ - MonthChipStrip: All, Jan … Dec; the active month filled #B3260F with white text; months with data show a small dot; future months dimmed; auto-scrolls to the active chip.
+ - Monthly Expense Trajectory card: ExpenseBarChart (fl_chart); tap a bar to change the month; selected bar #B3260F, other bars an orange gradient, empty months a thin baseline stub; legend Active month / Other months; footer with the previous month’s expense and the base salary.
+ - Category breakdown card: CategoryDonut with the month total and category count in the centre; legend rows (colour dot, name, amount, thin progress bar, ratio pill); previous/next month arrows.
+ - Recent transactions: 5 TransactionTile rows (category icon tile, title, Today/Yesterday/date plus time, red amount) and View all.
+ - AppBottomNav, with the centre Add button opening the Add Expense screen.
+3. Expanded layout: navigation rail; a four-up KPI row exactly like screenshot 2 (Monthly Salary, Expenses, Remaining Balance as the gradient card, Savings Rate); the trajectory card full width; donut and legend table side by side; recent transactions below.
+4. States: shimmer skeletons; pull-to-refresh that re-reads the sheet and shows Synced hh:mm; an error state with Retry; an empty state (No expenses in November yet, with an Add expense button).
+5. Interactions: tapping a month chip or bar switches the month (numbers count, the bar highlight moves, the donut re-sweeps); tapping a donut segment or legend row opens the Journal filtered to that category and month; tapping the salary KPI edits the salary (writes Settings).
+6. Delete dev/design_preview_screen.dart. Every number must come from real sheet data.
+7. Performance: RepaintBoundary on charts, provider select() to limit rebuilds, and a smoothness check with 500+ generated transactions (debug helper, removed afterwards).
+8. Widget test: the dashboard with a fake repository using my sample data, expecting ₹17,000 / ₹446 / ₹16,554 / 97.4% and the 61% / 25% / 13% ratios.
+
+Stop and wait for “Phase 6 works”.
+Phase 7 — Transaction Journal, search and filters
+You end with: a searchable, filterable journal — cards on phones, a table like screenshot 3 on wide screens.
+PHASE 7 — Transaction Journal, search and filters
+
+1. Journal screen, compact layout: gradient header with the title Transactions, an entry count (13 entries) and a month chip; below it a search field and a filter button; a list grouped by date (Today, Yesterday, 08 Nov) with sticky date headers.
+2. Row (TransactionTile): category icon tile, title, a subtitle with time and a category PillBadge, the amount in #B3260F with a minus sign (income in green with a plus), and a notes preview on a second line. Tap edits; swipe left deletes with confirmation; long-press opens a menu (Edit, Delete).
+3. Filters in a bottom sheet: type (All, Expense, Income), categories (multi-select chips), month, custom date range, sort (Sheet order, Newest, Oldest, Highest, Lowest). Keep them in a JournalFilter provider. Show active-filter chips with Clear all, plus the count and total of the filtered set. Search matches title, category, notes and amount, debounced 250 ms, with the match highlighted.
+4. Expanded layout (screenshot 3): a table with columns # | Item name | Amount (₹) | Date | Time (blue chip) | Category (tinted pill) | Notes | Actions (edit and delete icons); a toolbar with search, an Order: dropdown and a dark New button; a sticky header row; hover and focus states; keyboard accessible.
+5. Performance: slivers with builder delegates and memoised filtering that stays smooth at 5,000 rows.
+6. Empty states: no transactions at all; no results for the current filters (with a Clear filters button).
+7. Entry points from the Dashboard (View all, donut segment, legend row) with the filter pre-applied.
+8. Tests: filter and sort unit tests; a widget test for search plus a category filter.
+
+Stop and wait for “Phase 7 works”.
+Phase 8 — Income, categories, salary and budget goal
+You end with: income entries, full category management, editable salary and currency, and the Budget card from your mobile reference.
+PHASE 8 — Income, categories, salary and budget goal
+
+1. Income: the Add screen’s Income mode with source chips (Salary, Freelancing, Business, Other income, plus custom ones). Income shows green with a plus in the Journal; the Dashboard Extra Income KPI reflects it; apply the salary-override rule from Prompt 0A; add tests.
+2. Categories: CategoryRepository CRUD (create, edit, archive, delete) with case-insensitive, trimmed duplicate checks, type (Expense or Income) and status. Icons and colours are not stored in the sheet: use a deterministic mapping for the defaults and a hash-based warm palette for custom categories.
+3. Category Management screen: a list with usage counts, an add/edit bottom sheet, swipe to delete. Deleting a category that still has transactions is blocked until they are reassigned: show Reassign N transactions to… and update all affected rows in one batchUpdate with progress and conflict handling, then archive or delete the category.
+4. Salary and settings: edit the monthly salary (say in the sheet that it applies from the setup month onward), a currency selector (INR default; other currencies format through intl; note that existing amounts are not converted), and the display name. Everything goes through SettingsRepository (upsert by key).
+5. Budget goal (from the right-hand screen of screenshot 1): a Budget card — Set your monthly budget goal, with a + button — that opens a bottom sheet to set monthlyBudget. Once set, show a progress bar of spent versus budget with a warning tint from 80% and red at 100%. Show it in the Dashboard banner slot and on Analytics.
+6. Tests: category rules, reassignment, budget thresholds.
+
+Stop and wait for “Phase 8 works”.
+Phase 9 — Analytics and charts
+You end with: an Analytics screen modelled on the Spending screen of your mobile reference, built with fl_chart.
+PHASE 9 — Analytics and charts (fl_chart)
+
+Layout follows the right-hand Spending screen of screenshot 1, recoloured in the Ember palette.
+
+1. Header: gradient with a back button and the title Analytics; a hero amount (Spent in November); a range dropdown pill (Month | Year) and a year selector.
+2. Bar chart on the gradient: Jan–Dec bars, inactive bars white at 20%, the selected bar solid white, tap to select, animated. Below it a pill such as 12% less spent vs Oct (green down arrow when lower, red up arrow when higher; hidden when there is no previous data).
+3. The Budget card from Phase 8.
+4. Categories spend: two cards side by side. Highest expense (category icon tile, amount, N transactions) and Frequent spend (the category with the most transactions).
+5. White cards below: Income vs Expenses (grouped bars), Savings trend (line of savings rate by month), Category-wise spending (donut plus a ranked list), Daily average (this month vs last), Monthly comparison (this month vs last, by category).
+6. Rules: every number comes from FinanceCalculator (extend it, with unit tests); an empty-data state for each chart; touch tooltips; semantic labels for charts; animations of 600 ms or less; RepaintBoundary around charts; month labels shortened (J F M A …) at 320 dp; all-zero series must never divide by zero.
+7. Expanded layout: a two-column masonry of chart cards.
+8. Tests: calculator additions; a widget test with fake data.
+
+Stop and wait for “Phase 9 works”.
+Phase 10 — Settings and connecting an existing spreadsheet
+You end with: a complete Settings screen, safe reconnect flows, and a decision on how existing Google Sheets get connected.
+PHASE 10 — Settings and connecting an existing spreadsheet
+
+1. Settings screen sections: Profile (avatar, name, email); Finance (salary, budget, currency, default month); Categories (opens the Phase 8 screen); Spreadsheet (name, masked ID, owner, last synced, schema version, Open in Google Sheets via url_launcher, Reconnect, Connect existing); Privacy (policy link and a plain statement of what is stored where); Account (Log out, Disconnect Google account); Danger zone (Delete the app-created spreadsheet).
+2. Delete spreadsheet: only for a file this app created (verify the appProperties tag), never for a connected user-owned file; a multi-step confirmation where I type DELETE; say whether it goes to the Drive trash or is deleted permanently, and let me choose the trash.
+3. Connect existing spreadsheet. FIRST explain, using current Google docs, the options for choosing a pre-existing Google Sheet under the drive.file scope, and WAIT for my decision before coding the picker: (a) Google Picker inside a WebView, which needs a developer key and app ID in Google Cloud plus an HTTPS page I would host (for example on GitHub Pages; still no backend) and grants per-file access; (b) broader scopes (spreadsheets or drive): explain the sensitive/restricted-scope verification and security-assessment consequences; (c) pasting a URL, which only works if the app already has access to that file, so do not pretend otherwise. Recommend one.
+4. Then implement: URL and ID parsing; an access check (files.get); a canEdit check; structure validation with the Phase 4 validator; an offer to add missing worksheets or headers only with my consent and never touching other tabs; safe switching (confirm, reload, keep the previous ID for rollback).
+5. .xlsx files: explain that the Sheets API works only on native Google Sheets; show the steps (open in Drive → File → Save as Google Sheets) and detect the xlsx mimeType so I see that guidance instead of an obscure error.
+6. Guided Reconnect flows for a revoked permission, a trashed or deleted file, and a different Google account.
+7. An in-app Privacy Policy screen, accurate for this architecture (data lives only in the user’s Google Sheet; no app server; the ads note is added in Phase 12).
+8. Tests: URL/ID parser, connection state machine, a Settings widget test.
+
+Stop and wait for “Phase 10 works”.
+Phase 11 — Hardening: errors, security, accessibility, full testing
+You end with: every failure mode handled, a security and accessibility pass, a full test suite and a manual QA script for your 20 test cases.
+PHASE 11 — Hardening: errors, security, accessibility and full testing
+
+1. Errors: one AppFailure hierarchy with friendly messages (never raw exceptions or tokens); FlutterError.onError and PlatformDispatcher.onError handlers that log without personal data; a 20-second timeout on every request; an offline banner with automatic refresh on reconnection (justify any package you use); Retry everywhere. Screens: Offline, Session expired (Reconnect), Permission revoked, Sheet missing (Create new / Connect existing), Quota (try later), Schema mismatch (Repair).
+2. Security review: minimal scopes; tokens only in memory or plugin-managed storage; no secrets in the repo (check .gitignore for key.properties, keystores and env files); prove with grep that nothing sensitive is logged; decide android:allowBackup and data-extraction rules; cleartext traffic off; R8 shrinking on; the sheet never shared publicly; remove the dev screens (including sheet_debug_screen.dart).
+3. Performance: a profile-mode run with 2,000 transactions on Dashboard, Journal and Analytics; move heavy parsing to Isolate.run if needed; audit rebuilds.
+4. Accessibility: semantic labels for charts and amounts, 48 dp touch targets, contrast of 4.5:1 (check white on orange), a TalkBack pass, text scale 1.3, reduced motion.
+5. Tests: unit (calculator, parsers, mappers, retry, conflict), widget (auth screens, Add form, Dashboard, Journal filters, Settings), and one integration_test happy path against a fake sheets service.
+6. Write a manual QA script with steps, expected result and a pass/fail column for these 20 cases: new Google account login, existing account login, spreadsheet creation, reconnection, add, edit, delete, income, category creation, dashboard calculations, month filtering, yearly analytics, network disconnection, expired authorisation, revoked permission, missing spreadsheet, duplicate prevention, simultaneous edits on two devices, app restart, multi-device access.
+7. Finish with flutter analyze and flutter test both clean, and a coverage summary. Fix everything before Phase 12.
+
+Stop and wait for “Phase 11 works”.
+Phase 12 — AdMob (test ads only)
+You end with: banner and native test ads placed so they never interrupt money entry.
+PHASE 12 — AdMob (test ads only)
+
+1. Read the current google_mobile_ads documentation, then add the package. Use Google’s TEST application ID in AndroidManifest and Google’s TEST ad unit IDs (banner and native) from one constants file selectable by --dart-define, so real IDs are injected only for release and never committed.
+2. services/ads_service.dart: initialise the Mobile Ads SDK after consent; request consent with the package’s UMP consent API (required for users in the EEA, UK and Switzerland); mark the app as not child-directed; send no keywords or extras derived from expense data.
+3. Placement rules: one adaptive banner at the bottom of Analytics, below the content and above the bottom navigation, never overlapping it; one native ad in the Journal after every 8th row, styled like a TransactionTile but clearly labelled Ad on a distinct background; no ad in the first screenful of the Dashboard. No ads on Add/Edit/Delete/Save, Settings, spreadsheet connection, auth or error screens. Keep at least 16 dp between an ad and any financial figure.
+4. AdSlot widget: reserved height (no layout jump), shimmer while loading, graceful hide on failure with limited retry and backoff, proper disposal.
+5. Native ad styling in the Ember palette using the package’s supported template or factory.
+6. Show me how to register my phone as a test device, and list the AdMob and Play policy do’s and don’ts that matter for this layout, plus what I must declare in Play Console later.
+7. Tests: an AdSlot widget test (loading, failure, hidden state).
+
+Stop and wait for “Phase 12 works”.
+Phase 13 — Play Store preparation and publishing
+You end with: a signed release bundle, a privacy policy, filled-in Play Console forms and a store listing plan.
+PHASE 13 — Play Store preparation and publishing
+
+Verify every policy, number and deadline below against current Google Play Console Help and the Android developer docs. Tell me what you verified, and mark anything you could not verify as VERIFY.
+
+1. Final application ID and a version name / version code strategy.
+2. App icon: an adaptive icon (foreground, background, monochrome) in the Ember palette, via flutter_launcher_icons or Android Studio Image Asset (give exact steps). Splash through the Android 12+ splash screen API (add flutter_native_splash only if you justify it).
+3. Signing: create an upload keystore (keytool), key.properties (gitignored), Gradle signingConfigs, backup advice, Play App Signing. Get the Play app-signing SHA-1 and add both the upload and the app-signing SHA-1 to my Android OAuth client; explain why Google Sign-In works in debug but fails in Play builds otherwise.
+4. Build: flutter build appbundle --release with --obfuscate and --split-debug-info, store the symbols, and test the release build on a real phone through internal testing: sign-in and Sheets must work.
+5. The target API level currently required for new apps and updates (state the number and the deadline you verified), 16 KB page-size support for my plugins, and large-screen quality expectations.
+6. OAuth consent screen to production: what verification drive.file needs, what would change with broader scopes, brand/logo verification, authorised domain and privacy-policy URL, leaving Testing status.
+7. Privacy policy text accurate to this architecture (Google profile; the Drive file the app created or the user opened; Sheets data; no app server; ads SDK data; retention and deletion by deleting the sheet or revoking access; contact email), plus free hosting steps (for example GitHub Pages) so I get a public URL.
+8. Data safety form: a field-by-field guide for the app and for AdMob, with any uncertain item marked VERIFY.
+9. Ads declaration, content-rating questionnaire answers, target audience (not for children), category, and whether any financial-features declaration applies to a personal expense tracker.
+10. Store listing: title (30 characters max), short description (80), full description (4,000), a screenshot plan for phone and 7-inch / 10-inch tablet, a feature graphic brief (1024×500) in the Ember style, keywords.
+11. Testing tracks: internal testing, then closed testing (state the current tester count and duration required for new personal developer accounts), then production with a staged rollout; read the pre-launch report.
+12. A pre-launch checklist and post-launch monitoring (crashes and ANRs in Play Console, update cadence).
+
+Deliver a printable checklist plus every config file.
+Utility prompts
+Keep these handy. Use the Review prompt after Phases 4, 8 and 10.
+Resume (new chat)
+Paste Prompt 0A and 0B (with the screenshots) first, then this.
+We are continuing “Expense Journal & Budget”. Prompt 0A and 0B are above in this chat. Phase N is complete and working. Do not regenerate working files.
+
+My pubspec.yaml:
+[paste]
+
+Output of: find lib -type f | sort
+[paste]
+
+Output of: flutter --version
+[paste]
+
+Confirm in 5 lines what already exists and which package versions are installed, then wait for me to paste the next phase prompt.
+Fix an error
+Phase N is not working. Fix only this, with minimal changes.
+
+What I did: [steps]
+What I expected: [...]
+What happened: [...]
+Full error text from flutter run, flutter analyze or Logcat: [paste]
+Current content of the files involved: [paste]
+My flutter --version: [paste]
+
+Rules: give the root cause in 2–3 lines first; then the full corrected file(s); say if an API is deprecated or changed in my installed versions; give me a command to verify the fix. Do not change the architecture or upgrade packages unless that is the cause, and then explain why.
+Match the screenshots more closely
+Attached: a screenshot of my running screen and the original reference screenshot. Compare them on colour, spacing, radius, typography, shadows and motion. List the 5 most visible differences, then give exact code changes for those only. Do not touch logic or other screens.
+Whole-project review
+Review the whole project as a strict code reviewer. Check: any forbidden dependency or local database; any place where UI code calls Google APIs directly; tokens or expense data in logs or SharedPreferences; deprecated APIs; duplicated logic; calculation errors against Prompt 0A section 5; overflow risks at 320 dp and text scale 1.3; missing loading, empty and error states. Return a prioritised list (Critical, Important, Nice-to-have) with file paths and exact fixes. Do not change anything until I approve.
+
+
+Build cmd : flutter build apk --release --dart-define-from-file=config/google_oauth.json

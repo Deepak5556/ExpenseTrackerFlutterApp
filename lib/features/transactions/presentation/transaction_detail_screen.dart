@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/utils/app_feedback.dart';
 import '../../../core/utils/date_formatters.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/design_system_widgets.dart';
 import '../../../core/widgets/responsive_layout.dart';
 import '../../../core/utils/window_size_class.dart';
@@ -208,7 +209,7 @@ class _TransactionDetailScreenState
       context,
       title: 'Delete transaction?',
       message:
-          '“${item.title}” will be marked as deleted in your Google Sheet and hidden from this app.',
+          '“${item.title}” (${formatMoney(item.amountMinor)}) will be deleted from your Google Sheet.',
       confirmLabel: 'Delete',
       isDestructive: true,
     );

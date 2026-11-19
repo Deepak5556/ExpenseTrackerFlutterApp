@@ -144,9 +144,9 @@ void main() {
       await tester.pumpWidget(createTestApp(const AddTransactionScreen(initialType: 'expense')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Add transaction'), findsOneWidget);
-      expect(find.text('Amount'), findsOneWidget);
-      expect(find.text('Category'), findsOneWidget);
+      expect(find.text('Add expense'), findsOneWidget);
+      expect(find.text('AMOUNT'), findsOneWidget);
+      expect(find.text('CATEGORY'), findsOneWidget);
     });
 
     testWidgets('EditTransactionScreen renders edit form with transaction ID', (tester) async {
